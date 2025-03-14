@@ -8,6 +8,7 @@ export function SettingsPage() {
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState<ModelType>("claude-3-sonnet-20240229");
   const [systemPrompt, setSystemPrompt] = useState("");
+  const [toolVersion, setToolVersion] = useState<"computer_use_20241022" | "computer_use_20250124">("computer_use_20241022");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSystemTheme, setIsSystemTheme] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -26,6 +27,10 @@ export function SettingsPage() {
     const savedPrompt = AIService.getSystemPrompt();
     setSystemPrompt(savedPrompt);
 
+    // 加载工具版本
+    const savedToolVersion = AIService.getToolVersion();
+    setToolVersion(savedToolVersion);
+
     // 加载主题设置
     setIsDarkMode(theme === "dark");
     setIsSystemTheme(theme === "system");
@@ -39,6 +44,11 @@ export function SettingsPage() {
   // 处理模型选择变更
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value as ModelType);
+  };
+
+  // 处理工具版本变更
+  const handleToolVersionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setToolVersion(e.target.value as "computer_use_20241022" | "computer_use_20250124");
   };
 
   // 处理系统提示词变更
@@ -81,6 +91,9 @@ export function SettingsPage() {
       
       // 保存模型选择
       AIService.setModel(model);
+      
+      // 保存工具版本
+      AIService.setToolVersion(toolVersion);
       
       // 保存系统提示词
       AIService.setSystemPrompt(systemPrompt);
@@ -153,6 +166,23 @@ export function SettingsPage() {
                 <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
               </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1" htmlFor="tool-version">
+                工具版本
+              </label>
+              <select
+                id="tool-version"
+                value={toolVersion}
+                onChange={handleToolVersionChange}
+                className="w-full rounded-md border border-input bg-background px-3 py-2"
+              >
+                <option value="computer_use_20241022">Computer Use 2024-10-22</option>
+                <option value="computer_use_20250124">Computer Use 2025-01-24</option>
+              </select>
+              <p className="mt-1 text-sm text-muted-foreground">
+                2025-01-24版本提供更多功能，如三击操作、滚动和按键保持等。
+              </p>
             </div>
           </div>
         </div>

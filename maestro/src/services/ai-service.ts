@@ -2,6 +2,8 @@ import { Message, ModelType, ToolOutput, ToolOutputType } from "./types";
 import { ComputerService } from "./computer-service";
 import { BashService } from "./bash-service";
 import { EditService } from "./edit-service";
+import Anthropic from '@anthropic-ai/sdk';
+import { Tool, MessageParam, ContentBlockParam } from "@anthropic-ai/sdk/resources/messages";
 
 /**
  * AI通信服务，用于与Claude API通信
@@ -9,12 +11,18 @@ import { EditService } from "./edit-service";
 export class AIService {
   private static apiKey: string = "";
   private static model: ModelType = "claude-3-sonnet-20240229";
-  private static apiEndpoint: string = "https://api.anthropic.com/v1/messages";
   private static systemPrompt: string = `You are Maestro, an AI-powered computer control assistant. You can help users control their computer, perform various tasks, including screen interactions, command execution, and text editing.
 
 You are running in a cross-platform desktop application with access to the user's computer system. Please use these permissions carefully and always ask for user confirmation for potentially risky operations.
 
 When you need to perform operations, use the provided tools rather than describing how to perform the operations.`;
+
+  // 工具版本和beta标志
+  private static toolVersion: "computer_use_20241022" | "computer_use_20250124" = "computer_use_20241022";
+  private static betaFlags: Record<string, string> = {
+    "computer_use_20241022": "computer-use-2024-10-22",
+    "computer_use_20250124": "computer-use-2025-01-24"
+  };
 
   /**
    * 设置API密钥
@@ -56,6 +64,33 @@ When you need to perform operations, use the provided tools rather than describi
   }
 
   /**
+   * 设置工具版本
+   * @param version 工具版本
+   */
+  static setToolVersion(version: "computer_use_20241022" | "computer_use_20250124"): void {
+    this.toolVersion = version;
+    localStorage.setItem("toolVersion", version);
+  }
+
+  /**
+   * 获取工具版本
+   */
+  static getToolVersion(): "computer_use_20241022" | "computer_use_20250124" {
+    const savedVersion = localStorage.getItem("toolVersion");
+    if (savedVersion === "computer_use_20241022" || savedVersion === "computer_use_20250124") {
+      return savedVersion;
+    }
+    return this.toolVersion;
+  }
+
+  /**
+   * 获取当前工具版本的beta标志
+   */
+  static getBetaFlag(): string {
+    return this.betaFlags[this.getToolVersion()];
+  }
+
+  /**
    * 设置系统提示词
    * @param prompt 系统提示词
    */
@@ -75,13 +110,13 @@ When you need to perform operations, use the provided tools rather than describi
   /**
    * 获取工具定义
    */
-  private static getToolDefinitions() {
+  private static getToolDefinitions(): Tool[] {
     return [
       {
         name: "computer",
-        description: "控制计算机屏幕、鼠标和键盘的工具",
+        description: "Control computer screen, mouse, and keyboard",
         input_schema: {
-          type: "object",
+          type: "object" as const,
           properties: {
             action: {
               type: "string",
@@ -103,36 +138,36 @@ When you need to perform operations, use the provided tools rather than describi
                 "wait",
                 "cursor_position"
               ],
-              description: "要执行的操作类型"
+              description: "Type of action to perform"
             },
             x: {
               type: "number",
-              description: "鼠标X坐标"
+              description: "Mouse X coordinate"
             },
             y: {
               type: "number",
-              description: "鼠标Y坐标"
+              description: "Mouse Y coordinate"
             },
             text: {
               type: "string",
-              description: "要输入的文本"
+              description: "Text to type"
             },
             key: {
               type: "string",
-              description: "要按下的键"
+              description: "Key to press"
             },
             direction: {
               type: "string",
               enum: ["up", "down", "left", "right"],
-              description: "滚动方向"
+              description: "Scroll direction"
             },
             amount: {
               type: "number",
-              description: "滚动量"
+              description: "Scroll amount"
             },
             duration_ms: {
               type: "number",
-              description: "等待时间（毫秒）"
+              description: "Wait duration in milliseconds"
             }
           },
           required: ["action"]
@@ -140,21 +175,21 @@ When you need to perform operations, use the provided tools rather than describi
       },
       {
         name: "bash",
-        description: "执行系统命令的工具",
+        description: "Execute system commands",
         input_schema: {
-          type: "object",
+          type: "object" as const,
           properties: {
             command: {
               type: "string",
-              description: "要执行的命令"
+              description: "Command to execute"
             },
             timeout_ms: {
               type: "number",
-              description: "命令超时时间（毫秒）"
+              description: "Command timeout in milliseconds"
             },
             background: {
               type: "boolean",
-              description: "是否在后台运行"
+              description: "Whether to run in background"
             }
           },
           required: ["command"]
@@ -162,38 +197,38 @@ When you need to perform operations, use the provided tools rather than describi
       },
       {
         name: "edit",
-        description: "读取和编辑文件的工具",
+        description: "Read and edit files",
         input_schema: {
-          type: "object",
+          type: "object" as const,
           properties: {
             action: {
               type: "string",
               enum: ["read", "write", "append", "list", "search", "replace"],
-              description: "要执行的操作类型"
+              description: "Type of action to perform"
             },
             path: {
               type: "string",
-              description: "文件或目录路径"
+              description: "File or directory path"
             },
             content: {
               type: "string",
-              description: "要写入的内容"
+              description: "Content to write"
             },
             pattern: {
               type: "string",
-              description: "搜索模式"
+              description: "Search pattern"
             },
             replacement: {
               type: "string",
-              description: "替换内容"
+              description: "Replacement text"
             },
             start_line: {
               type: "number",
-              description: "起始行号"
+              description: "Start line number"
             },
             end_line: {
               type: "number",
-              description: "结束行号"
+              description: "End line number"
             }
           },
           required: ["action", "path"]
@@ -214,82 +249,69 @@ When you need to perform operations, use the provided tools rather than describi
   ): Promise<{ message: Message, toolResults: ToolOutput[] }> {
     const apiKey = this.getApiKey();
     if (!apiKey) {
-      throw new Error("API密钥未设置");
+      throw new Error("API key not set");
     }
 
     try {
-      // 转换消息格式为Claude API格式
-      const claudeMessages = messages.map((msg) => {
-        if (msg.toolOutputs && msg.toolOutputs.length > 0) {
-          // 如果消息包含工具输出，将其转换为工具结果格式
-          return {
-            role: msg.role,
-            content: msg.toolOutputs.map(output => {
-              if (output.type === "screenshot") {
-                return {
-                  type: "image",
-                  source: {
-                    type: "base64",
-                    media_type: "image/png",
-                    data: output.content
-                  }
-                };
-              } else {
-                return {
-                  type: "text",
-                  text: output.content
-                };
-              }
-            })
-          };
-        } else {
-          // 普通文本消息
-          return {
-            role: msg.role,
-            content: [
-              {
-                type: "text",
-                text: msg.content
-              }
-            ]
-          };
+      // 创建Anthropic客户端
+      const client = new Anthropic({
+        apiKey: apiKey,
+        defaultHeaders: {
+          "anthropic-beta": this.getBetaFlag()
         }
       });
 
-      // 构建请求体
-      const requestBody = {
+      // 转换消息格式为Claude API格式
+      const claudeMessages: MessageParam[] = messages.map((msg) => {
+        // 普通文本消息
+        if (!msg.toolOutputs || msg.toolOutputs.length === 0) {
+          return {
+            role: msg.role,
+            content: msg.content
+          };
+        }
+        
+        // 处理包含工具输出的消息
+        const contentBlocks: ContentBlockParam[] = [];
+        
+        for (const output of msg.toolOutputs) {
+          if (output.type === "screenshot") {
+            contentBlocks.push({
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png" as "image/png",
+                data: output.content
+              }
+            });
+          } else {
+            contentBlocks.push({
+              type: "text",
+              text: output.content
+            });
+          }
+        }
+        
+        return {
+          role: msg.role,
+          content: contentBlocks
+        };
+      });
+
+      // 调用Claude API
+      const response = await client.messages.create({
         model: this.getModel(),
         messages: claudeMessages,
         system: systemPrompt || this.getSystemPrompt(),
         max_tokens: 4000,
         tools: this.getToolDefinitions()
-      };
-
-      // 发送请求
-      const response = await fetch(this.apiEndpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": apiKey,
-          "anthropic-version": "2023-06-01",
-        },
-        body: JSON.stringify(requestBody),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(
-          `API请求失败: ${response.status} ${errorData.error?.message || "未知错误"}`
-        );
-      }
-
-      const data = await response.json();
       
       // 提取文本内容和工具调用
       let textContent = "";
       const toolCalls: any[] = [];
       
-      for (const block of data.content) {
+      for (const block of response.content) {
         if (block.type === "text") {
           textContent += block.text;
         } else if (block.type === "tool_use") {
@@ -320,7 +342,7 @@ When you need to perform operations, use the provided tools rather than describi
 
       return { message: responseMessage, toolResults };
     } catch (error) {
-      console.error("发送消息到Claude API失败:", error);
+      console.error("Failed to send message to Claude API:", error);
       throw error;
     }
   }
@@ -343,14 +365,14 @@ When you need to perform operations, use the provided tools rather than describi
         default:
           return {
             type: "text",
-            content: `未知工具: ${tool}`
+            content: `Unknown tool: ${tool}`
           };
       }
     } catch (error) {
-      console.error(`执行工具 ${tool} 失败:`, error);
+      console.error(`Failed to execute tool ${tool}:`, error);
       return {
         type: "text",
-        content: `执行工具 ${tool} 失败: ${error}`,
+        content: `Failed to execute tool ${tool}: ${error}`,
         error: String(error)
       };
     }
@@ -375,102 +397,102 @@ When you need to perform operations, use the provided tools rather than describi
         await ComputerService.moveMouse(args.x, args.y);
         return {
           type: "text",
-          content: `已将鼠标移动到 (${args.x}, ${args.y})`
+          content: `Moved mouse to (${args.x}, ${args.y})`
         };
       case "left_click":
         await ComputerService.click("left", args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处执行左键点击`
+          content: `Left clicked at (${args.x}, ${args.y})`
         };
       case "right_click":
         await ComputerService.click("right", args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处执行右键点击`
+          content: `Right clicked at (${args.x}, ${args.y})`
         };
       case "middle_click":
         await ComputerService.click("middle", args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处执行中键点击`
+          content: `Middle clicked at (${args.x}, ${args.y})`
         };
       case "double_click":
         await ComputerService.doubleClick(args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处执行双击`
+          content: `Double clicked at (${args.x}, ${args.y})`
         };
       case "triple_click":
         await ComputerService.tripleClick(args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处执行三击`
+          content: `Triple clicked at (${args.x}, ${args.y})`
         };
       case "left_mouse_down":
         await ComputerService.mouseDownAt(args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处按下鼠标左键`
+          content: `Mouse down at (${args.x}, ${args.y})`
         };
       case "left_mouse_up":
         await ComputerService.mouseUpAt(args.x, args.y);
         return {
           type: "text",
-          content: `已在 (${args.x}, ${args.y}) 处释放鼠标左键`
+          content: `Mouse up at (${args.x}, ${args.y})`
         };
       case "left_click_drag":
         await ComputerService.dragMouse(args.x, args.y, args.end_x, args.end_y);
         return {
           type: "text",
-          content: `已从 (${args.x}, ${args.y}) 拖动到 (${args.end_x}, ${args.end_y})`
+          content: `Dragged from (${args.x}, ${args.y}) to (${args.end_x}, ${args.end_y})`
         };
       case "scroll":
         await ComputerService.scroll(args.direction, args.amount || 3);
         return {
           type: "text",
-          content: `已向${args.direction}滚动${args.amount || 3}次`
+          content: `Scrolled ${args.direction} ${args.amount || 3} times`
         };
       case "type":
         await ComputerService.typeText(args.text);
         return {
           type: "text",
-          content: `已输入文本: ${args.text.substring(0, 20)}${args.text.length > 20 ? '...' : ''}`
+          content: `Typed text: ${args.text.substring(0, 20)}${args.text.length > 20 ? '...' : ''}`
         };
       case "key":
         await ComputerService.pressKey(args.key);
         return {
           type: "text",
-          content: `已按下按键: ${args.key}`
+          content: `Pressed key: ${args.key}`
         };
       case "hold_key":
         if (args.down === true) {
           await ComputerService.keyDown(args.key);
           return {
             type: "text",
-            content: `已按下并保持按键: ${args.key}`
+            content: `Key down: ${args.key}`
           };
         } else {
           await ComputerService.keyUp(args.key);
           return {
             type: "text",
-            content: `已释放按键: ${args.key}`
+            content: `Key up: ${args.key}`
           };
         }
       case "wait":
         await ComputerService.wait(args.duration_ms || 1000);
         return {
           type: "text",
-          content: `已等待 ${args.duration_ms || 1000} 毫秒`
+          content: `Waited for ${args.duration_ms || 1000} ms`
         };
       case "cursor_position":
         const position = await ComputerService.getCursorPosition();
         return {
           type: "text",
-          content: `当前光标位置: (${position.x}, ${position.y})`
+          content: `Cursor position: (${position.x}, ${position.y})`
         };
       default:
-        throw new Error(`未知的计算机操作: ${action}`);
+        throw new Error(`Unknown computer action: ${action}`);
     }
   }
 
@@ -487,7 +509,7 @@ When you need to perform operations, use the provided tools rather than describi
     if (background) {
       // 如果需要在后台运行，使用后台执行命令的方法
       const processId = await BashService.executeCommandBackground(command);
-      result = `命令已在后台启动，进程ID: ${processId}`;
+      result = `Command started in background, process ID: ${processId}`;
     } else {
       // 否则使用普通执行命令的方法
       result = await BashService.executeCommand(command);
@@ -518,13 +540,13 @@ When you need to perform operations, use the provided tools rather than describi
         await EditService.writeFileContent(path, args.content);
         return {
           type: "text",
-          content: `已写入文件: ${path}`
+          content: `File written: ${path}`
         };
       case "append":
         await EditService.appendFileContent(path, args.content);
         return {
           type: "text",
-          content: `已追加到文件: ${path}`
+          content: `Content appended to file: ${path}`
         };
       case "list":
         const files = await EditService.listDirectory(path);
@@ -545,10 +567,10 @@ When you need to perform operations, use the provided tools rather than describi
         await EditService.strReplace(path, args.pattern, args.replacement);
         return {
           type: "text",
-          content: `已在文件 ${path} 中将 "${args.pattern}" 替换为 "${args.replacement}"`
+          content: `Replaced "${args.pattern}" with "${args.replacement}" in file ${path}`
         };
       default:
-        throw new Error(`未知的编辑操作: ${action}`);
+        throw new Error(`Unknown edit action: ${action}`);
     }
   }
 } 
