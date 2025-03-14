@@ -13,6 +13,10 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [onlyNMostRecentImages, setOnlyNMostRecentImages] = useState<number>(3); // 默认保留最近3张图像
+  const [thinkingBudget, setThinkingBudget] = useState<number | undefined>(undefined); // 默认不启用思考
+  const [enablePromptCaching, setEnablePromptCaching] = useState<boolean>(true); // 默认启用提示缓存
+  const [enableTokenEfficientTools, setEnableTokenEfficientTools] = useState<boolean>(true); // 默认启用token高效工具
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 加载历史消息
@@ -43,6 +47,32 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
+  // 加载图像数量限制设置
+  useEffect(() => {
+    const savedImageLimit = localStorage.getItem("imageLimit");
+    if (savedImageLimit) {
+      setOnlyNMostRecentImages(parseInt(savedImageLimit, 10));
+    }
+    
+    // 加载思考预算设置
+    const savedThinkingBudget = localStorage.getItem("thinkingBudget");
+    if (savedThinkingBudget) {
+      setThinkingBudget(parseInt(savedThinkingBudget, 10));
+    }
+    
+    // 加载提示缓存设置
+    const savedPromptCaching = localStorage.getItem("promptCaching");
+    if (savedPromptCaching) {
+      setEnablePromptCaching(savedPromptCaching === "true");
+    }
+    
+    // 加载token高效工具设置
+    const savedTokenEfficientTools = localStorage.getItem("enableTokenEfficientTools");
+    if (savedTokenEfficientTools) {
+      setEnableTokenEfficientTools(savedTokenEfficientTools === "true");
+    }
+  }, []);
+
   const handleSendMessage = async () => {
     if (!input.trim()) return;
     
@@ -71,32 +101,28 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       // 获取最近的消息作为上下文
       const recentMessages = [...messages, userMessage].slice(-10);
       
-      // 发送消息到Claude API
-      const { message: assistantMessage, toolResults } = await AIService.sendMessage(recentMessages);
+      // 发送消息到Claude API，现在返回完整的消息历史，并传递图像数量限制和思考预算
+      const updatedMessages = await AIService.sendMessage(
+        recentMessages, 
+        undefined, 
+        onlyNMostRecentImages,
+        thinkingBudget,
+        enablePromptCaching
+      );
       
-      // 如果有工具调用结果，添加到消息中
-      if (toolResults.length > 0) {
-        assistantMessage.toolOutputs = toolResults;
-        
-        // 通知父组件工具输出
-        if (onToolOutput) {
-          onToolOutput(toolResults[0]);
+      // 提取新消息（用户消息之后的所有消息）
+      const newMessages = updatedMessages.slice(recentMessages.indexOf(userMessage) + 1);
+      
+      // 更新消息列表
+      setMessages((prev) => [...prev.slice(0, prev.length - 1), userMessage, ...newMessages]);
+      
+      // 检查是否有工具输出消息
+      for (const msg of newMessages) {
+        if (msg.toolOutputs && msg.toolOutputs.length > 0 && onToolOutput) {
+          // 通知父组件最新的工具输出
+          onToolOutput(msg.toolOutputs[0]);
+          break;
         }
-        
-        // 创建用户消息，包含工具输出
-        const toolResponseMessage: Message = {
-          id: Date.now().toString(),
-          role: "user",
-          content: "工具执行结果",
-          timestamp: Date.now(),
-          toolOutputs: toolResults,
-        };
-        
-        // 更新消息列表，添加助手消息和工具响应消息
-        setMessages((prev) => [...prev, assistantMessage, toolResponseMessage]);
-      } else {
-        // 没有工具调用，只添加助手消息
-        setMessages((prev) => [...prev, assistantMessage]);
       }
     } catch (error) {
       console.error("发送消息失败:", error);

@@ -12,6 +12,10 @@ export function SettingsPage() {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSystemTheme, setIsSystemTheme] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [imageLimit, setImageLimit] = useState<number>(3);
+  const [thinkingBudget, setThinkingBudget] = useState<number | undefined>(undefined);
+  const [promptCaching, setPromptCaching] = useState<boolean>(true);
+  const [tokenEfficientTools, setTokenEfficientTools] = useState<boolean>(true);
 
   // 加载保存的设置
   useEffect(() => {
@@ -34,6 +38,30 @@ export function SettingsPage() {
     // 加载主题设置
     setIsDarkMode(theme === "dark");
     setIsSystemTheme(theme === "system");
+
+    // 加载图像数量限制
+    const savedImageLimit = localStorage.getItem("imageLimit");
+    if (savedImageLimit) {
+      setImageLimit(parseInt(savedImageLimit, 10));
+    }
+    
+    // 加载思考预算
+    const savedThinkingBudget = localStorage.getItem("thinkingBudget");
+    if (savedThinkingBudget) {
+      setThinkingBudget(parseInt(savedThinkingBudget, 10));
+    }
+    
+    // 加载提示缓存设置
+    const savedPromptCaching = localStorage.getItem("promptCaching");
+    if (savedPromptCaching) {
+      setPromptCaching(savedPromptCaching === "true");
+    }
+    
+    // 加载token高效工具设置
+    const savedTokenEfficientTools = localStorage.getItem("enableTokenEfficientTools");
+    if (savedTokenEfficientTools) {
+      setTokenEfficientTools(savedTokenEfficientTools === "true");
+    }
   }, [theme]);
 
   // 处理API密钥变更
@@ -81,6 +109,38 @@ export function SettingsPage() {
     setSystemPrompt(defaultPrompt);
   };
 
+  // 处理图像限制变化
+  const handleImageLimitChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseInt(e.target.value, 10);
+    setImageLimit(value);
+    localStorage.setItem("imageLimit", value.toString());
+  };
+
+  // 处理思考预算变化
+  const handleThinkingBudgetChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value === "" ? undefined : parseInt(e.target.value, 10);
+    setThinkingBudget(value);
+    if (value === undefined) {
+      localStorage.removeItem("thinkingBudget");
+    } else {
+      localStorage.setItem("thinkingBudget", value.toString());
+    }
+  };
+
+  // 处理提示缓存变化
+  const handlePromptCachingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.checked;
+    setPromptCaching(value);
+    localStorage.setItem("promptCaching", value.toString());
+  };
+
+  // 处理token高效工具变化
+  const handleTokenEfficientToolsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.checked;
+    setTokenEfficientTools(value);
+    AIService.setEnableTokenEfficientTools(value);
+  };
+
   // 保存设置
   const handleSaveSettings = () => {
     try {
@@ -97,6 +157,9 @@ export function SettingsPage() {
       
       // 保存系统提示词
       AIService.setSystemPrompt(systemPrompt);
+      
+      // 保存token高效工具设置
+      AIService.setEnableTokenEfficientTools(tokenEfficientTools);
       
       // 显示保存成功状态
       setSaveStatus("saved");
@@ -165,6 +228,7 @@ export function SettingsPage() {
                 <option value="claude-3-opus-20240229">Claude 3 Opus</option>
                 <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
+                <option value="claude-3-7-sonnet-20250219">Claude 3.7 Sonnet</option>
               </select>
             </div>
             <div>
@@ -242,6 +306,74 @@ export function SettingsPage() {
               <label className="ml-2 block text-sm font-medium" htmlFor="system-theme">
                 跟随系统主题
               </label>
+            </div>
+          </div>
+        </div>
+        
+        <div className="rounded-lg border p-4">
+          <h2 className="text-xl font-semibold mb-4">高级设置</h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">保留最近的图像数量</label>
+              <input
+                type="number"
+                value={imageLimit}
+                onChange={handleImageLimitChange}
+                min="0"
+                max="20"
+                className="w-full p-2 border rounded"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                设置为0表示不限制图像数量。较小的值可以减少token消耗，但可能会丢失历史上下文。
+              </p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium mb-1">思考预算（tokens）</label>
+              <input
+                type="number"
+                value={thinkingBudget === undefined ? "" : thinkingBudget}
+                onChange={handleThinkingBudgetChange}
+                min="0"
+                max="4000"
+                placeholder="留空表示不启用思考"
+                className="w-full p-2 border rounded"
+              />
+              <p className="text-sm text-gray-500 mt-1">
+                设置思考预算可以让AI在回答前进行思考。较大的值可以提高回答质量，但会增加token消耗。
+              </p>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                id="prompt-caching"
+                type="checkbox"
+                checked={promptCaching}
+                onChange={handlePromptCachingChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label className="ml-2 block text-sm font-medium" htmlFor="prompt-caching">
+                启用提示缓存
+              </label>
+              <p className="text-sm text-gray-500 ml-2">
+                启用提示缓存可以减少token消耗，但可能会影响图像过滤功能。
+              </p>
+            </div>
+            
+            <div className="flex items-center">
+              <input
+                id="token-efficient-tools"
+                type="checkbox"
+                checked={tokenEfficientTools}
+                onChange={handleTokenEfficientToolsChange}
+                className="h-4 w-4 rounded border-gray-300"
+              />
+              <label className="ml-2 block text-sm font-medium" htmlFor="token-efficient-tools">
+                启用token高效工具（仅适用于Claude 3.7 Sonnet）
+              </label>
+              <p className="text-sm text-gray-500 ml-2">
+                启用token高效工具可以减少token消耗，提高响应速度。
+              </p>
             </div>
           </div>
         </div>

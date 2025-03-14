@@ -11,11 +11,23 @@ import { Tool, MessageParam, ContentBlockParam } from "@anthropic-ai/sdk/resourc
 export class AIService {
   private static apiKey: string = "";
   private static model: ModelType = "claude-3-sonnet-20240229";
-  private static systemPrompt: string = `You are Maestro, an AI-powered computer control assistant. You can help users control their computer, perform various tasks, including screen interactions, command execution, and text editing.
+  private static systemPrompt: string = `<SYSTEM_CAPABILITY>
+* You are Maestro, an AI-powered computer control assistant. You can help users control their computer, perform various tasks, including screen interactions, command execution, and text editing.
+* You are running in a cross-platform desktop application with access to the user's computer system. Please use these permissions carefully and always ask for user confirmation for potentially risky operations.
+* You can utilize an operating system with internet access.
+* You can feel free to install applications with your bash tool. Use curl instead of wget when possible.
+* To open browsers, please just click on the browser icon.
+* Using bash tool you can start GUI applications, but you may need to set appropriate display environment variables.
+* When using your bash tool with commands that are expected to output very large quantities of text, redirect into a tmp file and use edit tool or grep to confirm output.
+* When viewing a page it can be helpful to zoom out so that you can see everything on the page. Either that, or make sure you scroll down to see everything before deciding something isn't available.
+* When using your computer function calls, they take a while to run and send back to you. Where possible/feasible, try to chain multiple of these calls all into one function calls request.
+* The current date is ${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}.
+</SYSTEM_CAPABILITY>
 
-You are running in a cross-platform desktop application with access to the user's computer system. Please use these permissions carefully and always ask for user confirmation for potentially risky operations.
-
-When you need to perform operations, use the provided tools rather than describing how to perform the operations.`;
+<IMPORTANT>
+* When using browsers, if a startup wizard appears, IGNORE IT. Do not even click "skip this step". Instead, click on the address bar where it says "Search or enter address", and enter the appropriate search term or URL there.
+* If the item you are looking at is a pdf, if after taking a single screenshot of the pdf it seems that you want to read the entire document instead of trying to continue to read the pdf from your screenshots + navigation, determine the URL, use curl to download the pdf, install and use appropriate tools to convert it to a text file, and then read that text file directly with your edit tool.
+</IMPORTANT>`;
 
   // 工具版本和beta标志
   private static toolVersion: "computer_use_20241022" | "computer_use_20250124" = "computer_use_20241022";
@@ -23,6 +35,8 @@ When you need to perform operations, use the provided tools rather than describi
     "computer_use_20241022": "computer-use-2024-10-22",
     "computer_use_20250124": "computer-use-2025-01-24"
   };
+  // 是否启用token高效工具
+  private static enableTokenEfficientTools: boolean = true;
 
   /**
    * 设置API密钥
@@ -84,10 +98,37 @@ When you need to perform operations, use the provided tools rather than describi
   }
 
   /**
+   * 设置是否启用token高效工具
+   * @param enable 是否启用
+   */
+  static setEnableTokenEfficientTools(enable: boolean): void {
+    this.enableTokenEfficientTools = enable;
+    localStorage.setItem("enableTokenEfficientTools", enable.toString());
+  }
+
+  /**
+   * 获取是否启用token高效工具
+   */
+  static getEnableTokenEfficientTools(): boolean {
+    const savedValue = localStorage.getItem("enableTokenEfficientTools");
+    if (savedValue !== null) {
+      return savedValue === "true";
+    }
+    return this.enableTokenEfficientTools;
+  }
+
+  /**
    * 获取当前工具版本的beta标志
    */
   static getBetaFlag(): string {
-    return this.betaFlags[this.getToolVersion()];
+    const flags: string[] = [this.betaFlags[this.getToolVersion()]];
+    
+    // 如果启用token高效工具，添加对应的beta标志
+    if (this.getEnableTokenEfficientTools() && this.getModel() === "claude-3-7-sonnet-20250219") {
+      flags.push("token-efficient-tools-2025-02-19");
+    }
+    
+    return flags.join(",");
   }
 
   /**
@@ -238,15 +279,44 @@ When you need to perform operations, use the provided tools rather than describi
   }
 
   /**
-   * 发送消息到Claude API
+   * 为消息注入提示缓存控制
+   * @param messages 消息历史
+   */
+  private static injectPromptCaching(messages: Message[]): void {
+    // 为最近3个用户消息设置缓存断点
+    let breakpointsRemaining = 3;
+    
+    for (let i = messages.length - 1; i >= 0; i--) {
+      const message = messages[i];
+      if (message.role === "user") {
+        if (breakpointsRemaining > 0) {
+          breakpointsRemaining--;
+          message.cacheControl = { type: "ephemeral" };
+        } else {
+          delete message.cacheControl;
+          // 我们只会每个循环有一个额外的轮次
+          break;
+        }
+      }
+    }
+  }
+
+  /**
+   * 发送消息到Claude API并处理工具调用循环
    * @param messages 消息历史
    * @param systemPrompt 系统提示词
-   * @returns AI响应和工具调用结果
+   * @param onlyNMostRecentImages 只保留最近的N张图像，为0或undefined时不过滤
+   * @param thinkingBudget 思考预算，为undefined时不启用思考
+   * @param enablePromptCaching 是否启用提示缓存
+   * @returns 更新后的消息历史
    */
   static async sendMessage(
     messages: Message[],
-    systemPrompt?: string
-  ): Promise<{ message: Message, toolResults: ToolOutput[] }> {
+    systemPrompt?: string,
+    onlyNMostRecentImages?: number,
+    thinkingBudget?: number,
+    enablePromptCaching: boolean = true
+  ): Promise<Message[]> {
     const apiKey = this.getApiKey();
     if (!apiKey) {
       throw new Error("API key not set");
@@ -261,14 +331,34 @@ When you need to perform operations, use the provided tools rather than describi
         }
       });
 
+      // 如果启用提示缓存，添加缓存控制（提示缓存已正式发布，不再需要beta标志）
+      if (enablePromptCaching) {
+        this.injectPromptCaching(messages);
+        
+        // 因为缓存读取的价格是10%，我们认为通过截断图像来破坏缓存是不明智的
+        onlyNMostRecentImages = 0;
+      }
+
+      // 如果指定了图像数量限制，过滤消息中的图像
+      if (onlyNMostRecentImages) {
+        this.filterRecentImages(messages, onlyNMostRecentImages);
+      }
+
       // 转换消息格式为Claude API格式
       const claudeMessages: MessageParam[] = messages.map((msg) => {
         // 普通文本消息
         if (!msg.toolOutputs || msg.toolOutputs.length === 0) {
-          return {
+          const messageParam: MessageParam = {
             role: msg.role,
             content: msg.content
           };
+          
+          // 如果有缓存控制，添加到消息参数
+          if (msg.cacheControl) {
+            (messageParam as any).cache_control = msg.cacheControl;
+          }
+          
+          return messageParam;
         }
         
         // 处理包含工具输出的消息
@@ -292,55 +382,127 @@ When you need to perform operations, use the provided tools rather than describi
           }
         }
         
-        return {
+        const messageParam: MessageParam = {
           role: msg.role,
           content: contentBlocks
         };
-      });
-
-      // 调用Claude API
-      const response = await client.messages.create({
-        model: this.getModel(),
-        messages: claudeMessages,
-        system: systemPrompt || this.getSystemPrompt(),
-        max_tokens: 4000,
-        tools: this.getToolDefinitions()
-      });
-      
-      // 提取文本内容和工具调用
-      let textContent = "";
-      const toolCalls: any[] = [];
-      
-      for (const block of response.content) {
-        if (block.type === "text") {
-          textContent += block.text;
-        } else if (block.type === "tool_use") {
-          toolCalls.push({
-            tool: block.name,
-            id: block.id,
-            args: block.input
-          });
+        
+        // 如果有缓存控制，添加到消息参数
+        if (msg.cacheControl) {
+          (messageParam as any).cache_control = msg.cacheControl;
         }
-      }
+        
+        return messageParam;
+      });
 
-      // 构建响应消息
-      const responseMessage: Message = {
-        id: Date.now().toString(),
-        role: "assistant",
-        content: textContent,
-        timestamp: Date.now(),
-      };
+      // 主循环 - 类似Python版本的sampling_loop
+      while (true) {
+        // 准备API调用参数
+        const apiParams: any = {
+          model: this.getModel(),
+          messages: claudeMessages,
+          system: systemPrompt || this.getSystemPrompt(),
+          max_tokens: 4000,
+          tools: this.getToolDefinitions(),
+        };
+        
+        // 如果有思考预算，添加思考参数
+        if (thinkingBudget) {
+          apiParams.thinking = {
+            budget: thinkingBudget
+          };
+        }
+        
+        // 调用Claude API
+        const response = await client.messages.create(apiParams);
+        
+        // 提取文本内容和工具调用
+        let textContent = "";
+        const toolCalls: any[] = [];
+        const thinkingContent: any[] = [];
+        
+        for (const block of response.content) {
+          if (block.type === "text") {
+            textContent += block.text;
+          } else if (block.type === "tool_use") {
+            toolCalls.push({
+              tool: block.name,
+              id: block.id,
+              args: block.input
+            });
+          } else if (block.type === "thinking") {
+            // 处理思考块
+            thinkingContent.push(block);
+          }
+        }
 
-      // 执行工具调用
-      const toolResults: ToolOutput[] = [];
-      if (toolCalls.length > 0) {
+        // 构建响应消息
+        const responseMessage: Message = {
+          id: Date.now().toString(),
+          role: "assistant",
+          content: textContent,
+          timestamp: Date.now(),
+          thinking: thinkingContent.length > 0 ? thinkingContent : undefined
+        };
+
+        // 添加助手消息到历史
+        messages.push(responseMessage);
+
+        // 如果没有工具调用，退出循环
+        if (toolCalls.length === 0) {
+          return messages;
+        }
+
+        // 执行工具调用
+        const toolResults: ToolOutput[] = [];
         for (const call of toolCalls) {
           const result = await this.executeToolCall(call.tool, call.args);
           toolResults.push(result);
         }
-      }
 
-      return { message: responseMessage, toolResults };
+        // 创建包含工具结果的用户消息
+        const toolResultMessage: Message = {
+          id: Date.now().toString(),
+          role: "user",
+          content: "",
+          timestamp: Date.now(),
+          toolOutputs: toolResults
+        };
+
+        // 添加工具结果消息到历史
+        messages.push(toolResultMessage);
+        
+        // 更新claudeMessages以包含新消息
+        claudeMessages.push({
+          role: "assistant",
+          content: textContent
+        });
+        
+        // 添加工具结果消息
+        const toolResultBlocks: ContentBlockParam[] = [];
+        for (const result of toolResults) {
+          if (result.type === "screenshot") {
+            toolResultBlocks.push({
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: "image/png" as "image/png",
+                data: result.content
+              }
+            });
+          } else {
+            toolResultBlocks.push({
+              type: "text",
+              text: result.content
+            });
+          }
+        }
+        
+        claudeMessages.push({
+          role: "user",
+          content: toolResultBlocks
+        });
+      }
     } catch (error) {
       console.error("Failed to send message to Claude API:", error);
       throw error;
@@ -571,6 +733,59 @@ When you need to perform operations, use the provided tools rather than describi
         };
       default:
         throw new Error(`Unknown edit action: ${action}`);
+    }
+  }
+
+  /**
+   * 过滤消息中的图像，只保留最近的N张
+   * @param messages 消息历史
+   * @param imagesToKeep 要保留的图像数量
+   * @param minRemovalThreshold 最小移除阈值
+   */
+  private static filterRecentImages(
+    messages: Message[],
+    imagesToKeep: number,
+    minRemovalThreshold: number = 3
+  ): void {
+    if (!imagesToKeep) return;
+
+    // 收集所有包含截图的消息
+    const messagesWithScreenshots = messages.filter(
+      (msg) => msg.toolOutputs && msg.toolOutputs.some((output) => output.type === "screenshot")
+    );
+
+    // 计算总图像数
+    let totalImages = 0;
+    for (const msg of messagesWithScreenshots) {
+      if (msg.toolOutputs) {
+        totalImages += msg.toolOutputs.filter((output) => output.type === "screenshot").length;
+      }
+    }
+
+    // 计算要移除的图像数
+    let imagesToRemove = totalImages - imagesToKeep;
+    // 为了更好的缓存行为，我们按块移除
+    imagesToRemove -= imagesToRemove % minRemovalThreshold;
+    
+    if (imagesToRemove <= 0) return;
+
+    // 从最早的消息开始移除图像
+    for (const msg of messagesWithScreenshots) {
+      if (imagesToRemove <= 0) break;
+      
+      if (msg.toolOutputs) {
+        const newToolOutputs: ToolOutput[] = [];
+        
+        for (const output of msg.toolOutputs) {
+          if (output.type === "screenshot" && imagesToRemove > 0) {
+            imagesToRemove--;
+            continue;
+          }
+          newToolOutputs.push(output);
+        }
+        
+        msg.toolOutputs = newToolOutputs;
+      }
     }
   }
 } 

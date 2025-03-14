@@ -15,6 +15,8 @@ export interface Message {
   content: string;
   timestamp: number;
   toolOutputs?: ToolOutput[];
+  cacheControl?: { type: string };
+  thinking?: any[];
 }
 
 // 会话类型
@@ -27,7 +29,7 @@ export interface Session {
 }
 
 // AI模型类型
-export type ModelType = "claude-3-opus-20240229" | "claude-3-sonnet-20240229" | "claude-3-haiku-20240307";
+export type ModelType = "claude-3-opus-20240229" | "claude-3-sonnet-20240229" | "claude-3-haiku-20240307" | "claude-3-7-sonnet-20250219";
 
 // 系统信息类型
 export interface SystemInfo {
