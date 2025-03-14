@@ -328,7 +328,8 @@ export class AIService {
         apiKey: apiKey,
         defaultHeaders: {
           "anthropic-beta": this.getBetaFlag()
-        }
+        },
+        dangerouslyAllowBrowser: true // 允许在浏览器环境中运行
       });
 
       // 如果启用提示缓存，添加缓存控制（提示缓存已正式发布，不再需要beta标志）
