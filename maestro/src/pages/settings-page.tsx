@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { AIService, ModelType } from "../services";
+import { Loader2 } from "lucide-react";
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [apiKey, setApiKey] = useState("");
-  const [model, setModel] = useState("claude-3-sonnet-20240229");
+  const [model, setModel] = useState<ModelType>("claude-3-sonnet-20240229");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSystemTheme, setIsSystemTheme] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -12,11 +14,11 @@ export function SettingsPage() {
   // 加载保存的设置
   useEffect(() => {
     // 加载API密钥
-    const savedApiKey = localStorage.getItem("apiKey") || "";
+    const savedApiKey = AIService.getApiKey();
     setApiKey(savedApiKey);
 
     // 加载模型选择
-    const savedModel = localStorage.getItem("model") || "claude-3-sonnet-20240229";
+    const savedModel = AIService.getModel();
     setModel(savedModel);
 
     // 加载主题设置
@@ -31,7 +33,7 @@ export function SettingsPage() {
 
   // 处理模型选择变更
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setModel(e.target.value);
+    setModel(e.target.value as ModelType);
   };
 
   // 处理深色模式切换
@@ -59,10 +61,10 @@ export function SettingsPage() {
       setSaveStatus("saving");
       
       // 保存API密钥
-      localStorage.setItem("apiKey", apiKey);
+      AIService.setApiKey(apiKey);
       
       // 保存模型选择
-      localStorage.setItem("model", model);
+      AIService.setModel(model);
       
       // 显示保存成功状态
       setSaveStatus("saved");
@@ -87,7 +89,12 @@ export function SettingsPage() {
           className="px-4 py-2 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
         >
           {saveStatus === "idle" && "保存设置"}
-          {saveStatus === "saving" && "保存中..."}
+          {saveStatus === "saving" && (
+            <span className="flex items-center">
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              保存中...
+            </span>
+          )}
           {saveStatus === "saved" && "已保存"}
           {saveStatus === "error" && "保存失败"}
         </button>

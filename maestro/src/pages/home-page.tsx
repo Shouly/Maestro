@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { ChatInterface } from "../components/chat/chat-interface";
 import { ToolOutput } from "../components/tools/tool-output";
+import { ToolOutput as ToolOutputType } from "../services";
 
 export function HomePage() {
   const [toolOutput, setToolOutput] = useState<{
@@ -11,16 +12,24 @@ export function HomePage() {
     content: "",
   });
 
-  const [showWelcome, setShowWelcome] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  // 模拟首次访问检测，实际应用中可以使用localStorage
+  // 检查是否是首次访问
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowWelcome(false);
-    }, 5000); // 5秒后自动隐藏欢迎信息
-
-    return () => clearTimeout(timer);
+    const hasVisitedBefore = localStorage.getItem("hasVisitedHome") === "true";
+    setShowWelcome(!hasVisitedBefore);
+    
+    // 标记已访问
+    localStorage.setItem("hasVisitedHome", "true");
   }, []);
+
+  // 处理工具输出
+  const handleToolOutput = (output: ToolOutputType) => {
+    setToolOutput({
+      type: output.type,
+      content: output.content,
+    });
+  };
 
   if (showWelcome) {
     return (
@@ -66,7 +75,7 @@ export function HomePage() {
   return (
     <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-2">
       <div className="h-full overflow-hidden rounded-lg border">
-        <ChatInterface />
+        <ChatInterface onToolOutput={handleToolOutput} />
       </div>
       <div className="h-full overflow-hidden rounded-lg border">
         <ToolOutput output={toolOutput.content} type={toolOutput.type} />
