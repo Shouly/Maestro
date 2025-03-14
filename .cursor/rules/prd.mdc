@@ -1,0 +1,10 @@
+---
+description: system prd doc
+globs: 
+alwaysApply: false
+---
+
+# Your rule content
+
+- 中文回答问题
+- 遵循我的 [PRD.md](mdc:PRD.md) 文档回答问题
