@@ -23,7 +23,16 @@ export class ComputerService {
    */
   static async takeScreenshot(): Promise<string> {
     try {
-      return await invoke("take_screenshot");
+      // 调用Rust函数并获取ScreenshotResult对象
+      const result = await invoke<{ base64_image: string }>("take_screenshot");
+      
+      // 从结果中提取base64_image字段
+      if (result && typeof result === 'object' && 'base64_image' in result) {
+        return result.base64_image;
+      } else {
+        console.error("截图结果格式不正确:", result);
+        throw new Error("截图结果格式不正确");
+      }
     } catch (error) {
       console.error("截取屏幕失败:", error);
       throw error;
