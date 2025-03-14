@@ -73,12 +73,26 @@ export class ComputerService {
   }
 
   /**
+   * 将鼠标按钮类型转换为大写开头的格式
+   * @param button 鼠标按钮
+   * @returns 大写开头的鼠标按钮类型
+   */
+  private static capitalizeButton(button: MouseButton): string {
+    const buttonMap = {
+      "left": "Left",
+      "right": "Right",
+      "middle": "Middle"
+    };
+    return buttonMap[button];
+  }
+
+  /**
    * 鼠标点击
    * @param button 鼠标按钮
    */
   static async mouseClick(button: MouseButton = "left"): Promise<void> {
     try {
-      await invoke("mouse_click", { button });
+      await invoke("mouse_click", { button: this.capitalizeButton(button) });
     } catch (error) {
       console.error("鼠标点击失败:", error);
       throw error;
@@ -109,7 +123,7 @@ export class ComputerService {
    */
   static async mouseDoubleClick(button: MouseButton = "left"): Promise<void> {
     try {
-      await invoke("mouse_double_click", { button });
+      await invoke("mouse_double_click", { button: this.capitalizeButton(button) });
     } catch (error) {
       console.error("鼠标双击失败:", error);
       throw error;
@@ -139,7 +153,7 @@ export class ComputerService {
    */
   static async mouseTripleClick(button: MouseButton = "left"): Promise<void> {
     try {
-      await invoke("mouse_triple_click", { button });
+      await invoke("mouse_triple_click", { button: this.capitalizeButton(button) });
     } catch (error) {
       console.error("鼠标三击失败:", error);
       throw error;
@@ -169,7 +183,7 @@ export class ComputerService {
    */
   static async mouseDown(button: MouseButton = "left"): Promise<void> {
     try {
-      await invoke("mouse_down", { button });
+      await invoke("mouse_down", { button: this.capitalizeButton(button) });
     } catch (error) {
       console.error("鼠标按下失败:", error);
       throw error;
@@ -184,7 +198,7 @@ export class ComputerService {
   static async mouseDownAt(x: number, y: number): Promise<void> {
     try {
       await this.moveMouse(x, y);
-      await invoke("mouse_down", { button: "left" });
+      await invoke("mouse_down", { button: this.capitalizeButton("left") });
     } catch (error) {
       console.error("鼠标按下失败:", error);
       throw error;
@@ -197,7 +211,7 @@ export class ComputerService {
    */
   static async mouseUp(button: MouseButton = "left"): Promise<void> {
     try {
-      await invoke("mouse_up", { button });
+      await invoke("mouse_up", { button: this.capitalizeButton(button) });
     } catch (error) {
       console.error("鼠标释放失败:", error);
       throw error;
@@ -212,7 +226,7 @@ export class ComputerService {
   static async mouseUpAt(x: number, y: number): Promise<void> {
     try {
       await this.moveMouse(x, y);
-      await invoke("mouse_up", { button: "left" });
+      await invoke("mouse_up", { button: this.capitalizeButton("left") });
     } catch (error) {
       console.error("鼠标释放失败:", error);
       throw error;
@@ -235,7 +249,13 @@ export class ComputerService {
     button: MouseButton = "left"
   ): Promise<void> {
     try {
-      await invoke("mouse_drag", { fromX, fromY, toX, toY, button });
+      await invoke("mouse_drag", { 
+        fromX, 
+        fromY, 
+        toX, 
+        toY, 
+        button: this.capitalizeButton(button) 
+      });
     } catch (error) {
       console.error("鼠标拖拽失败:", error);
       throw error;
