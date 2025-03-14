@@ -10,7 +10,7 @@ import { Tool, MessageParam, ContentBlockParam } from "@anthropic-ai/sdk/resourc
  */
 export class AIService {
   private static apiKey: string = "";
-  private static model: ModelType = "claude-3-sonnet-20240229";
+  private static model: ModelType = "claude-3-7-sonnet-latest";
   private static systemPrompt: string = `<SYSTEM_CAPABILITY>
 * You are Maestro, an AI-powered computer control assistant. You can help users control their computer, perform various tasks, including screen interactions, command execution, and text editing.
 * You are running in a cross-platform desktop application with access to the user's computer system. Please use these permissions carefully and always ask for user confirmation for potentially risky operations.
@@ -30,9 +30,8 @@ export class AIService {
 </IMPORTANT>`;
 
   // 工具版本和beta标志
-  private static toolVersion: "computer_use_20241022" | "computer_use_20250124" = "computer_use_20241022";
+  private static toolVersion: "computer_use_20250124" = "computer_use_20250124";
   private static betaFlags: Record<string, string> = {
-    "computer_use_20241022": "computer-use-2024-10-22",
     "computer_use_20250124": "computer-use-2025-01-24"
   };
   // 是否启用token高效工具
@@ -72,28 +71,15 @@ export class AIService {
   static getModel(): ModelType {
     if (!this.model) {
       const savedModel = localStorage.getItem("model");
-      this.model = (savedModel as ModelType) || "claude-3-sonnet-20240229";
+      this.model = (savedModel as ModelType) || "claude-3-7-sonnet-latest";
     }
     return this.model;
   }
 
   /**
-   * 设置工具版本
-   * @param version 工具版本
-   */
-  static setToolVersion(version: "computer_use_20241022" | "computer_use_20250124"): void {
-    this.toolVersion = version;
-    localStorage.setItem("toolVersion", version);
-  }
-
-  /**
    * 获取工具版本
    */
-  static getToolVersion(): "computer_use_20241022" | "computer_use_20250124" {
-    const savedVersion = localStorage.getItem("toolVersion");
-    if (savedVersion === "computer_use_20241022" || savedVersion === "computer_use_20250124") {
-      return savedVersion;
-    }
+  static getToolVersion(): "computer_use_20250124" {
     return this.toolVersion;
   }
 
@@ -124,7 +110,7 @@ export class AIService {
     const flags: string[] = [this.betaFlags[this.getToolVersion()]];
     
     // 如果启用token高效工具，添加对应的beta标志
-    if (this.getEnableTokenEfficientTools() && this.getModel() === "claude-3-7-sonnet-20250219") {
+    if (this.getEnableTokenEfficientTools() && this.getModel() === "claude-3-7-sonnet-latest") {
       flags.push("token-efficient-tools-2025-02-19");
     }
     
