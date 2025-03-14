@@ -15,7 +15,6 @@ export interface Message {
   content: string;
   timestamp: number;
   toolOutputs?: ToolOutput[];
-  cacheControl?: { type: string };
   thinking?: any[];
 }
 

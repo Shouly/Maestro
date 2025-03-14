@@ -283,22 +283,9 @@ export class AIService {
    * @param messages 消息历史
    */
   private static injectPromptCaching(messages: Message[]): void {
-    // 为最近3个用户消息设置缓存断点
-    let breakpointsRemaining = 3;
-    
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const message = messages[i];
-      if (message.role === "user") {
-        if (breakpointsRemaining > 0) {
-          breakpointsRemaining--;
-          message.cacheControl = { type: "ephemeral" };
-        } else {
-          delete message.cacheControl;
-          // 我们只会每个循环有一个额外的轮次
-          break;
-        }
-      }
-    }
+    // 提示缓存现在是GA功能，不再需要在消息中添加cache_control属性
+    // 缓存控制现在由API自动处理
+    // 此方法保留但不执行任何操作
   }
 
   /**
@@ -334,8 +321,7 @@ export class AIService {
 
       // 如果启用提示缓存，添加缓存控制（提示缓存已正式发布，不再需要beta标志）
       if (enablePromptCaching) {
-        this.injectPromptCaching(messages);
-        
+        // 提示缓存现在是GA功能，不再需要显式调用injectPromptCaching
         // 因为缓存读取的价格是10%，我们认为通过截断图像来破坏缓存是不明智的
         onlyNMostRecentImages = 0;
       }
@@ -354,11 +340,7 @@ export class AIService {
             content: msg.content
           };
           
-          // 如果有缓存控制，添加到消息参数
-          if (msg.cacheControl) {
-            (messageParam as any).cache_control = msg.cacheControl;
-          }
-          
+          // 不再添加cache_control属性
           return messageParam;
         }
         
@@ -388,11 +370,7 @@ export class AIService {
           content: contentBlocks
         };
         
-        // 如果有缓存控制，添加到消息参数
-        if (msg.cacheControl) {
-          (messageParam as any).cache_control = msg.cacheControl;
-        }
-        
+        // 不再添加cache_control属性
         return messageParam;
       });
 
