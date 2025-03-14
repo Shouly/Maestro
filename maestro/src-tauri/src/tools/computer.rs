@@ -760,7 +760,7 @@ pub fn scale_coordinates(x: i32, y: i32, scale_up: bool) -> ToolResult<(i32, i32
 
 /// 点击指定坐标
 #[tauri::command]
-pub async fn click_at(x: i32, y: i32, button: Option<MouseButtonType>, double: Option<bool>) -> ToolResult<()> {
+pub async fn _click_at(x: i32, y: i32, button: Option<MouseButtonType>, double: Option<bool>) -> ToolResult<()> {
     let mut enigo = Enigo::new();
     
     // 移动到指定位置
@@ -782,7 +782,7 @@ pub async fn click_at(x: i32, y: i32, button: Option<MouseButtonType>, double: O
 
 /// 选择文本（通过三击）
 #[tauri::command]
-pub async fn select_text(x: i32, y: i32) -> ToolResult<()> {
+pub async fn _select_text(x: i32, y: i32) -> ToolResult<()> {
     let mut enigo = Enigo::new();
     
     // 移动到指定位置

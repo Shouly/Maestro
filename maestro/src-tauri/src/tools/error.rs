@@ -11,25 +11,25 @@ pub enum ToolError {
     Serialization(String),
 
     #[error("屏幕截图错误: {0}")]
-    Screenshot(String),
+    _Screenshot(String),
 
     #[error("鼠标/键盘控制错误: {0}")]
-    Input(String),
+    _Input(String),
 
     #[error("命令执行错误: {0}")]
     Command(String),
 
     #[error("文件操作错误: {0}")]
-    FileOperation(String),
+    _FileOperation(String),
 
     #[error("参数错误: {0}")]
     InvalidArgument(String),
 
     #[error("权限错误: {0}")]
-    Permission(String),
+    _Permission(String),
 
     #[error("未知错误: {0}")]
-    Unknown(String),
+    _Unknown(String),
 }
 
 // 从 std::io::Error 转换
@@ -49,19 +49,9 @@ impl From<serde_json::Error> for ToolError {
 /// 结果类型别名
 pub type ToolResult<T> = Result<T, ToolError>;
 
-/// 从字符串创建错误
-pub fn err<T>(message: impl Into<String>) -> ToolResult<T> {
-    Err(ToolError::Unknown(message.into()))
-}
-
 /// 从字符串创建命令错误
 pub fn cmd_err<T>(message: impl Into<String>) -> ToolResult<T> {
     Err(ToolError::Command(message.into()))
-}
-
-/// 从字符串创建文件操作错误
-pub fn file_err<T>(message: impl Into<String>) -> ToolResult<T> {
-    Err(ToolError::FileOperation(message.into()))
 }
 
 /// 从字符串创建参数错误

@@ -36,7 +36,7 @@ pub struct CommandOptions {
     /// 是否合并标准错误到标准输出
     pub merge_stderr: Option<bool>,
     /// 是否以管理员权限运行（需要用户确认）
-    pub admin: Option<bool>,
+    pub _admin: Option<bool>,
     /// 超时时间（秒）
     pub timeout: Option<u64>,
 }
@@ -47,7 +47,7 @@ impl Default for CommandOptions {
             cwd: None,
             env: None,
             merge_stderr: Some(false),
-            admin: Some(false),
+            _admin: Some(false),
             timeout: None,
         }
     }
