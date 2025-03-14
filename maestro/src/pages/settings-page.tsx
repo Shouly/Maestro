@@ -7,6 +7,7 @@ export function SettingsPage() {
   const { theme, setTheme } = useTheme();
   const [apiKey, setApiKey] = useState("");
   const [model, setModel] = useState<ModelType>("claude-3-sonnet-20240229");
+  const [systemPrompt, setSystemPrompt] = useState("");
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSystemTheme, setIsSystemTheme] = useState(true);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
@@ -21,6 +22,10 @@ export function SettingsPage() {
     const savedModel = AIService.getModel();
     setModel(savedModel);
 
+    // 加载系统提示词
+    const savedPrompt = AIService.getSystemPrompt();
+    setSystemPrompt(savedPrompt);
+
     // 加载主题设置
     setIsDarkMode(theme === "dark");
     setIsSystemTheme(theme === "system");
@@ -34,6 +39,11 @@ export function SettingsPage() {
   // 处理模型选择变更
   const handleModelChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setModel(e.target.value as ModelType);
+  };
+
+  // 处理系统提示词变更
+  const handleSystemPromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setSystemPrompt(e.target.value);
   };
 
   // 处理深色模式切换
@@ -55,6 +65,12 @@ export function SettingsPage() {
     }
   };
 
+  // 重置系统提示词为默认值
+  const handleResetSystemPrompt = () => {
+    const defaultPrompt = AIService.getSystemPrompt();
+    setSystemPrompt(defaultPrompt);
+  };
+
   // 保存设置
   const handleSaveSettings = () => {
     try {
@@ -65,6 +81,9 @@ export function SettingsPage() {
       
       // 保存模型选择
       AIService.setModel(model);
+      
+      // 保存系统提示词
+      AIService.setSystemPrompt(systemPrompt);
       
       // 显示保存成功状态
       setSaveStatus("saved");
@@ -134,6 +153,35 @@ export function SettingsPage() {
                 <option value="claude-3-sonnet-20240229">Claude 3 Sonnet</option>
                 <option value="claude-3-haiku-20240307">Claude 3 Haiku</option>
               </select>
+            </div>
+          </div>
+        </div>
+        
+        <div className="rounded-lg border p-4">
+          <h2 className="text-xl font-semibold mb-4">AI 配置</h2>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-1">
+                <label className="block text-sm font-medium" htmlFor="system-prompt">
+                  系统提示词
+                </label>
+                <button
+                  onClick={handleResetSystemPrompt}
+                  className="text-xs text-primary hover:underline"
+                >
+                  重置为默认
+                </button>
+              </div>
+              <textarea
+                id="system-prompt"
+                value={systemPrompt}
+                onChange={handleSystemPromptChange}
+                rows={6}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm"
+              />
+              <p className="mt-1 text-sm text-muted-foreground">
+                系统提示词用于指导AI助手的行为和能力。修改此内容可能会影响AI的响应方式。
+              </p>
             </div>
           </div>
         </div>

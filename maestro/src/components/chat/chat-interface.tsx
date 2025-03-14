@@ -68,51 +68,36 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     setIsLoading(true);
     
     try {
-      // 发送消息到Claude API
-      const systemPrompt = `你是Maestro，一个AI驱动的计算机控制助手。你可以帮助用户控制计算机，执行各种任务，包括屏幕交互、命令执行和文本编辑等。
-      
-你可以使用以下工具：
-1. 屏幕控制工具 (ComputerTool)：截取屏幕、控制鼠标和键盘
-2. 命令执行工具 (BashTool)：执行系统命令
-3. 文本编辑工具 (EditTool)：读取和编辑文件
-
-当你需要使用工具时，请使用以下格式：
-{{tool:工具名}}
-{
-  "参数1": "值1",
-  "参数2": "值2"
-}
-{{/tool}}
-
-例如：
-{{tool:takeScreenshot}}
-{}
-{{/tool}}
-
-请尽量简洁明了地回答用户问题，并在需要时主动提出使用工具来帮助用户。`;
-
       // 获取最近的消息作为上下文
       const recentMessages = [...messages, userMessage].slice(-10);
       
       // 发送消息到Claude API
-      const assistantMessage = await AIService.sendMessage(recentMessages, systemPrompt);
+      const { message: assistantMessage, toolResults } = await AIService.sendMessage(recentMessages);
       
-      // 解析工具调用
-      const toolCalls = AIService.parseToolCalls(assistantMessage.content);
-      
-      // 如果有工具调用，执行工具调用
-      if (toolCalls.length > 0) {
-        const toolOutputs = await AIService.executeToolCalls(toolCalls);
-        assistantMessage.toolOutputs = toolOutputs;
+      // 如果有工具调用结果，添加到消息中
+      if (toolResults.length > 0) {
+        assistantMessage.toolOutputs = toolResults;
         
         // 通知父组件工具输出
-        if (onToolOutput && toolOutputs.length > 0) {
-          onToolOutput(toolOutputs[0]);
+        if (onToolOutput) {
+          onToolOutput(toolResults[0]);
         }
+        
+        // 创建用户消息，包含工具输出
+        const toolResponseMessage: Message = {
+          id: Date.now().toString(),
+          role: "user",
+          content: "工具执行结果",
+          timestamp: Date.now(),
+          toolOutputs: toolResults,
+        };
+        
+        // 更新消息列表，添加助手消息和工具响应消息
+        setMessages((prev) => [...prev, assistantMessage, toolResponseMessage]);
+      } else {
+        // 没有工具调用，只添加助手消息
+        setMessages((prev) => [...prev, assistantMessage]);
       }
-      
-      // 更新消息列表
-      setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("发送消息失败:", error);
       setError(`发送消息失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -144,7 +129,13 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                     {output.error ? (
                       <span className="text-destructive">错误: {output.error}</span>
                     ) : (
-                      <span>工具输出: {output.content.substring(0, 50)}...</span>
+                      <span>
+                        {output.type === "screenshot" ? (
+                          "截图已捕获"
+                        ) : (
+                          `工具输出: ${output.content.substring(0, 50)}${output.content.length > 50 ? '...' : ''}`
+                        )}
+                      </span>
                     )}
                   </div>
                 ))}

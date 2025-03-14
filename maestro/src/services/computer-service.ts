@@ -43,6 +43,13 @@ export class ComputerService {
   }
 
   /**
+   * 获取光标位置（鼠标位置的别名）
+   */
+  static async getCursorPosition(): Promise<Coordinates> {
+    return this.getMousePosition();
+  }
+
+  /**
    * 移动鼠标到指定位置
    * @param x X坐标
    * @param y Y坐标
@@ -70,6 +77,24 @@ export class ComputerService {
   }
 
   /**
+   * 在指定位置点击
+   * @param button 鼠标按钮
+   * @param x X坐标（可选）
+   * @param y Y坐标（可选）
+   */
+  static async click(button: MouseButton = "left", x?: number, y?: number): Promise<void> {
+    try {
+      if (x !== undefined && y !== undefined) {
+        await this.moveMouse(x, y);
+      }
+      await this.mouseClick(button);
+    } catch (error) {
+      console.error("点击失败:", error);
+      throw error;
+    }
+  }
+
+  /**
    * 鼠标双击
    * @param button 鼠标按钮
    */
@@ -78,6 +103,23 @@ export class ComputerService {
       await invoke("mouse_double_click", { button });
     } catch (error) {
       console.error("鼠标双击失败:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 在指定位置双击
+   * @param x X坐标
+   * @param y Y坐标
+   */
+  static async doubleClick(x?: number, y?: number): Promise<void> {
+    try {
+      if (x !== undefined && y !== undefined) {
+        await this.moveMouse(x, y);
+      }
+      await this.mouseDoubleClick("left");
+    } catch (error) {
+      console.error("双击失败:", error);
       throw error;
     }
   }
@@ -96,6 +138,23 @@ export class ComputerService {
   }
 
   /**
+   * 在指定位置三击
+   * @param x X坐标
+   * @param y Y坐标
+   */
+  static async tripleClick(x?: number, y?: number): Promise<void> {
+    try {
+      if (x !== undefined && y !== undefined) {
+        await this.moveMouse(x, y);
+      }
+      await this.mouseTripleClick("left");
+    } catch (error) {
+      console.error("三击失败:", error);
+      throw error;
+    }
+  }
+
+  /**
    * 鼠标按下
    * @param button 鼠标按钮
    */
@@ -109,12 +168,42 @@ export class ComputerService {
   }
 
   /**
+   * 在指定位置按下鼠标
+   * @param x X坐标
+   * @param y Y坐标
+   */
+  static async mouseDownAt(x: number, y: number): Promise<void> {
+    try {
+      await this.moveMouse(x, y);
+      await invoke("mouse_down", { button: "left" });
+    } catch (error) {
+      console.error("鼠标按下失败:", error);
+      throw error;
+    }
+  }
+
+  /**
    * 鼠标释放
    * @param button 鼠标按钮
    */
   static async mouseUp(button: MouseButton = "left"): Promise<void> {
     try {
       await invoke("mouse_up", { button });
+    } catch (error) {
+      console.error("鼠标释放失败:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * 在指定位置释放鼠标
+   * @param x X坐标
+   * @param y Y坐标
+   */
+  static async mouseUpAt(x: number, y: number): Promise<void> {
+    try {
+      await this.moveMouse(x, y);
+      await invoke("mouse_up", { button: "left" });
     } catch (error) {
       console.error("鼠标释放失败:", error);
       throw error;
@@ -145,6 +234,18 @@ export class ComputerService {
   }
 
   /**
+   * 鼠标拖拽（别名）
+   */
+  static async dragMouse(
+    fromX: number,
+    fromY: number,
+    toX: number,
+    toY: number
+  ): Promise<void> {
+    return this.mouseDrag(fromX, fromY, toX, toY, "left");
+  }
+
+  /**
    * 鼠标滚动
    * @param direction 滚动方向
    * @param amount 滚动量
@@ -154,11 +255,21 @@ export class ComputerService {
     amount: number
   ): Promise<void> {
     try {
-      await invoke("mouse_scroll_direction", { direction, amount });
+      await invoke("mouse_scroll", { direction, amount });
     } catch (error) {
       console.error("鼠标滚动失败:", error);
       throw error;
     }
+  }
+
+  /**
+   * 鼠标滚动（别名）
+   */
+  static async scroll(
+    direction: ScrollDirection,
+    amount: number
+  ): Promise<void> {
+    return this.mouseScroll(direction, amount);
   }
 
   /**
@@ -172,6 +283,13 @@ export class ComputerService {
       console.error("按键失败:", error);
       throw error;
     }
+  }
+
+  /**
+   * 按键（别名）
+   */
+  static async pressKey(key: string): Promise<void> {
+    return this.keyPress(key);
   }
 
   /**
@@ -201,27 +319,27 @@ export class ComputerService {
   }
 
   /**
-   * 按键按下
+   * 按下按键
    * @param key 按键
    */
   static async keyDown(key: string): Promise<void> {
     try {
       await invoke("key_down", { key });
     } catch (error) {
-      console.error("按键按下失败:", error);
+      console.error("按下按键失败:", error);
       throw error;
     }
   }
 
   /**
-   * 按键释放
+   * 释放按键
    * @param key 按键
    */
   static async keyUp(key: string): Promise<void> {
     try {
       await invoke("key_up", { key });
     } catch (error) {
-      console.error("按键释放失败:", error);
+      console.error("释放按键失败:", error);
       throw error;
     }
   }
@@ -245,7 +363,7 @@ export class ComputerService {
    */
   static async wait(milliseconds: number): Promise<void> {
     try {
-      await invoke("wait", { milliseconds });
+      await new Promise(resolve => setTimeout(resolve, milliseconds));
     } catch (error) {
       console.error("等待失败:", error);
       throw error;
