@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::process::{Command, Stdio, Child};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Read};
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 use serde::{Deserialize, Serialize};
@@ -11,8 +11,7 @@ use std::time::Duration;
 use chrono::{DateTime, Utc};
 use once_cell::sync::Lazy;
 
-use super::error::{ToolResult, cmd_err, arg_err};
-use crate::utils;
+use super::error::{ToolResult, cmd_err};
 
 /// 命令执行结果
 #[derive(Debug, Serialize, Deserialize)]
@@ -388,10 +387,10 @@ pub fn execute_command_background(command: String, args: Vec<String>, options: O
 /// 获取后台进程列表
 #[tauri::command]
 pub fn list_background_processes() -> ToolResult<Vec<BackgroundProcess>> {
-    let processes = BACKGROUND_PROCESSES.lock().unwrap();
+    let mut processes = BACKGROUND_PROCESSES.lock().unwrap();
     let mut result = Vec::new();
     
-    for (&pid, child) in processes.iter() {
+    for (&pid, child) in processes.iter_mut() {
         // 检查进程状态
         let status = match child.try_wait() {
             Ok(Some(status)) => format!("已退出: {}", status),

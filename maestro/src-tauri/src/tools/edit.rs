@@ -1,5 +1,5 @@
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Mutex;
@@ -86,9 +86,9 @@ pub fn read_file_content(path: String, view_range: Option<(usize, i32)>) -> Tool
     // 处理结束行
     let actual_final_line = if final_line == -1 {
         n_lines_file
-    } else if final_line as usize > n_lines_file {
+    } else if (final_line as usize) > n_lines_file {
         return arg_err(format!("结束行 {} 超出文件行数 {}", final_line, n_lines_file));
-    } else if final_line as usize < init_line {
+    } else if (final_line as usize) < init_line {
         return arg_err(format!("结束行 {} 小于起始行 {}", final_line, init_line));
     } else {
         final_line as usize
@@ -245,8 +245,21 @@ pub fn list_directory(path: String) -> ToolResult<Vec<FileInfo>> {
     
     let mut files = Vec::new();
     
-    for entry in fs::read_dir(path_obj).map_err(|err| io_err(format!("无法读取目录 {}: {}", path, err)))? {
-        let entry = entry.map_err(|err| io_err(format!("无法读取目录项: {}", err)))?;
+    let read_dir = match fs::read_dir(path_obj) {
+        Ok(dir) => dir,
+        Err(err) => return io_err(format!("无法读取目录 {}: {}", path, err)),
+    };
+    
+    for entry_result in read_dir {
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(err) => {
+                // 记录错误但继续处理其他文件
+                eprintln!("无法读取目录项: {}", err);
+                continue;
+            }
+        };
+        
         let entry_path = entry.path();
         
         let metadata = match entry.metadata() {
@@ -321,8 +334,17 @@ fn copy_dir_recursive(source: &Path, destination: &Path) -> ToolResult<()> {
         }
     }
     
-    for entry in fs::read_dir(source).map_err(|err| io_err(format!("无法读取源目录 {}: {}", source.display(), err)))? {
-        let entry = entry.map_err(|err| io_err(format!("无法读取目录项: {}", err)))?;
+    let read_dir = match fs::read_dir(source) {
+        Ok(dir) => dir,
+        Err(err) => return io_err(format!("无法读取源目录 {}: {}", source.display(), err)),
+    };
+    
+    for entry_result in read_dir {
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(err) => return io_err(format!("无法读取目录项: {}", err)),
+        };
+        
         let entry_path = entry.path();
         
         let file_name = entry_path.file_name().unwrap();
@@ -406,8 +428,16 @@ pub fn search_files(dir: String, pattern: String) -> ToolResult<Vec<FileInfo>> {
 
 /// 递归搜索文件
 fn search_files_recursive(dir: &Path, pattern: &str, results: &mut Vec<FileInfo>) -> ToolResult<()> {
-    for entry in fs::read_dir(dir).map_err(|err| io_err(format!("无法读取目录 {}: {}", dir.display(), err)))? {
-        let entry = entry.map_err(|err| io_err(format!("无法读取目录项: {}", err)))?;
+    let read_dir = match fs::read_dir(dir) {
+        Ok(dir) => dir,
+        Err(err) => return io_err(format!("无法读取目录 {}: {}", dir.display(), err)),
+    };
+    
+    for entry_result in read_dir {
+        let entry = match entry_result {
+            Ok(entry) => entry,
+            Err(err) => return io_err(format!("无法读取目录项: {}", err)),
+        };
         let path = entry.path();
         
         let file_name = path.file_name()
@@ -581,7 +611,7 @@ pub fn insert_at_line(path: String, insert_line: usize, new_str: String) -> Tool
 /// 撤销上一次编辑
 #[tauri::command]
 pub fn undo_edit(path: String) -> ToolResult<String> {
-    let path_obj = Path::new(&path);
+    let _path_obj = Path::new(&path);
     
     // 获取文件历史记录
     let mut history_opt = None;

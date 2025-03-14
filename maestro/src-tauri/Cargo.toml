@@ -36,7 +36,7 @@ sysinfo = "0.29"
 # 命令行工具
 which = "4.4"
 # 时间处理
-chrono = "0.4"
+chrono = { version = "0.4", features = ["serde"] }
 # 正则表达式
 regex = "1.9"
 # 随机数

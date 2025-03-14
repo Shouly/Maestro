@@ -1,13 +1,14 @@
 use thiserror::Error;
+use serde::Serialize;
 
 /// 工具错误类型
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Serialize)]
 pub enum ToolError {
     #[error("IO错误: {0}")]
-    Io(#[from] std::io::Error),
+    Io(String),
 
     #[error("序列化错误: {0}")]
-    Serialization(#[from] serde_json::Error),
+    Serialization(String),
 
     #[error("屏幕截图错误: {0}")]
     Screenshot(String),
@@ -31,6 +32,20 @@ pub enum ToolError {
     Unknown(String),
 }
 
+// 从 std::io::Error 转换
+impl From<std::io::Error> for ToolError {
+    fn from(err: std::io::Error) -> Self {
+        ToolError::Io(err.to_string())
+    }
+}
+
+// 从 serde_json::Error 转换
+impl From<serde_json::Error> for ToolError {
+    fn from(err: serde_json::Error) -> Self {
+        ToolError::Serialization(err.to_string())
+    }
+}
+
 /// 结果类型别名
 pub type ToolResult<T> = Result<T, ToolError>;
 
@@ -52,4 +67,9 @@ pub fn file_err<T>(message: impl Into<String>) -> ToolResult<T> {
 /// 从字符串创建参数错误
 pub fn arg_err<T>(message: impl Into<String>) -> ToolResult<T> {
     Err(ToolError::InvalidArgument(message.into()))
+}
+
+/// 从字符串创建IO错误
+pub fn io_err<T>(message: impl Into<String>) -> ToolResult<T> {
+    Err(ToolError::Io(message.into()))
 } 

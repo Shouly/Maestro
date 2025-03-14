@@ -1,8 +1,10 @@
 use crate::tools::ToolResult;
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
 
 /// 将Base64编码的图像数据转换为HTML可显示的格式
 pub fn image_to_data_url(image_data: &[u8], mime_type: &str) -> ToolResult<String> {
-    let base64 = base64::encode(image_data);
+    let base64 = STANDARD.encode(image_data);
     Ok(format!("data:{};base64,{}", mime_type, base64))
 }
 

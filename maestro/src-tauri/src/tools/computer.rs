@@ -1,19 +1,17 @@
 use std::collections::HashMap;
-use std::path::PathBuf;
-use std::time::Duration;
-use serde::{Deserialize, Serialize};
-use sysinfo::{System, SystemExt, DiskExt, ProcessorExt, ComponentExt, NetworkExt};
-use screenshots::Screen;
-use enigo::{Enigo, Key, KeyboardControllable, MouseButton, MouseControllable};
-use image::{ImageBuffer, Rgba};
-use base64::{engine::general_purpose, Engine as _};
-use tokio::time::sleep;
 use std::sync::Mutex;
-use std::sync::Lazy;
+use std::time::Duration;
+use once_cell::sync::Lazy;
+use serde::{Deserialize, Serialize};
+use screenshots::Screen;
+use base64::Engine;
+use base64::engine::general_purpose::STANDARD;
+use sysinfo::{System, SystemExt, ProcessExt, DiskExt, NetworkExt, ComponentExt, CpuExt, PidExt};
+use enigo::{Enigo, MouseControllable, KeyboardControllable, Key, MouseButton};
+use tokio::time::sleep;
 use clipboard::{ClipboardContext, ClipboardProvider};
 
 use super::error::{ToolResult, io_err, arg_err};
-use crate::utils;
 
 /// 系统信息
 #[derive(Debug, Serialize, Deserialize)]
@@ -105,20 +103,25 @@ pub struct NetworkInfo {
 /// 获取系统信息
 #[tauri::command]
 pub fn get_system_info() -> ToolResult<SystemInfo> {
+    // 初始化系统信息
     let mut system = System::new_all();
     system.refresh_all();
     
-    // 获取操作系统信息
-    let os_name = System::name().unwrap_or_else(|| "Unknown".to_string());
-    let os_version = System::os_version().unwrap_or_else(|| "Unknown".to_string());
-    let hostname = System::host_name().unwrap_or_else(|| "Unknown".to_string());
-    let kernel_version = System::kernel_version().unwrap_or_else(|| "Unknown".to_string());
+    // 获取基本系统信息
+    let os_name = system.name().unwrap_or_else(|| "Unknown".to_string());
+    let os_version = system.os_version().unwrap_or_else(|| "Unknown".to_string());
+    let hostname = system.host_name().unwrap_or_else(|| "Unknown".to_string());
+    let kernel_version = system.kernel_version().unwrap_or_else(|| "Unknown".to_string());
     
     // 获取CPU信息
-    let cpu_info = if let Some(processor) = system.processors().first() {
-        let name = processor.name().to_string();
-        let cores = system.processors().len();
+    let cpu_info = if let Some(processor) = system.cpus().first() {
+        // 获取CPU核心数
+        let cores = system.cpus().len();
+        
+        // 获取CPU使用率
         let usage = processor.cpu_usage();
+        
+        // 获取CPU频率
         let frequency = processor.frequency();
         
         // 获取CPU温度
@@ -128,7 +131,7 @@ pub fn get_system_info() -> ToolResult<SystemInfo> {
             .map(|component| component.temperature());
         
         CpuInfo {
-            name,
+            name: processor.name().to_string(),
             cores,
             usage,
             frequency,
@@ -141,9 +144,9 @@ pub fn get_system_info() -> ToolResult<SystemInfo> {
     // 获取内存信息
     let total_memory = system.total_memory();
     let used_memory = system.used_memory();
-    let available_memory = system.available_memory();
+    let available_memory = total_memory.saturating_sub(used_memory);
     let memory_usage = if total_memory > 0 {
-        used_memory as f32 / total_memory as f32 * 100.0
+        (used_memory as f32 / total_memory as f32) * 100.0
     } else {
         0.0
     };
@@ -156,26 +159,24 @@ pub fn get_system_info() -> ToolResult<SystemInfo> {
     };
     
     // 获取磁盘信息
-    let mut disks_info = Vec::new();
+    let mut disks = Vec::new();
     for disk in system.disks() {
-        let name = disk.name().to_string_lossy().to_string();
-        let disk_type = format!("{:?}", disk.type_());
-        let file_system = String::from_utf8_lossy(disk.file_system()).to_string();
-        let mount_point = disk.mount_point().to_string_lossy().to_string();
         let total = disk.total_space();
         let available = disk.available_space();
         let used = total.saturating_sub(available);
         let usage = if total > 0 {
-            used as f32 / total as f32 * 100.0
+            (used as f32 / total as f32) * 100.0
         } else {
             0.0
         };
         
-        disks_info.push(DiskInfo {
-            name,
+        let disk_type = format!("{:?}", disk.kind());
+        
+        disks.push(DiskInfo {
+            name: disk.name().to_string_lossy().to_string(),
             disk_type,
-            file_system,
-            mount_point,
+            file_system: String::from_utf8_lossy(disk.file_system()).to_string(),
+            mount_point: disk.mount_point().to_string_lossy().to_string(),
             total,
             used,
             available,
@@ -184,9 +185,9 @@ pub fn get_system_info() -> ToolResult<SystemInfo> {
     }
     
     // 获取网络信息
-    let mut networks_info = HashMap::new();
+    let mut networks = HashMap::new();
     for (interface_name, network) in system.networks() {
-        networks_info.insert(interface_name.clone(), NetworkInfo {
+        networks.insert(interface_name.clone(), NetworkInfo {
             received: network.received(),
             transmitted: network.transmitted(),
             packets_received: network.packets_received(),
@@ -203,19 +204,19 @@ pub fn get_system_info() -> ToolResult<SystemInfo> {
         kernel_version,
         cpu: cpu_info,
         memory: memory_info,
-        disks: disks_info,
-        networks: networks_info,
+        disks,
+        networks,
     })
 }
 
-/// 获取进程列表
+/// 进程信息
 #[derive(Debug, Serialize, Deserialize)]
 pub struct ProcessInfo {
     /// 进程ID
     pub pid: u32,
     /// 进程名称
     pub name: String,
-    /// 内存使用
+    /// 内存使用量（字节）
     pub memory: u64,
     /// CPU使用率
     pub cpu_usage: f32,
@@ -236,7 +237,7 @@ pub fn get_processes() -> ToolResult<Vec<ProcessInfo>> {
     let mut processes = Vec::new();
     for (pid, process) in system.processes() {
         processes.push(ProcessInfo {
-            pid: *pid,
+            pid: pid.as_u32(),
             name: process.name().to_string(),
             memory: process.memory(),
             cpu_usage: process.cpu_usage(),
@@ -297,8 +298,8 @@ pub struct ScreenshotResult {
     pub mime_type: String,
 }
 
-/// 鼠标按钮
-#[derive(Debug, Serialize, Deserialize)]
+/// 鼠标按钮类型
+#[derive(Debug, Serialize, Deserialize, Clone, Copy)]
 pub enum MouseButtonType {
     /// 左键
     Left,
@@ -308,13 +309,12 @@ pub enum MouseButtonType {
     Middle,
 }
 
-impl From<MouseButtonType> for MouseButton {
-    fn from(button: MouseButtonType) -> Self {
-        match button {
-            MouseButtonType::Left => MouseButton::Left,
-            MouseButtonType::Right => MouseButton::Right,
-            MouseButtonType::Middle => MouseButton::Middle,
-        }
+/// 将 MouseButtonType 转换为 enigo 的 MouseButton
+fn convert_mouse_button(button: MouseButtonType) -> MouseButton {
+    match button {
+        MouseButtonType::Left => MouseButton::Left,
+        MouseButtonType::Right => MouseButton::Right,
+        MouseButtonType::Middle => MouseButton::Middle,
     }
 }
 
@@ -354,8 +354,12 @@ pub async fn take_screenshot() -> ToolResult<ScreenshotResult> {
     let height = image.height();
     
     // 将图像转换为Base64
-    let buffer = image.to_png().unwrap_or_default();
-    let base64_image = general_purpose::STANDARD.encode(&buffer);
+    let mut buffer = Vec::new();
+    let dynamic_image = image::DynamicImage::ImageRgba8(image);
+    if let Err(err) = dynamic_image.write_to(&mut std::io::Cursor::new(&mut buffer), image::ImageOutputFormat::Png) {
+        return io_err(format!("无法将图像转换为PNG格式: {}", err));
+    }
+    let base64_image = STANDARD.encode(&buffer);
     
     Ok(ScreenshotResult {
         base64_image,
@@ -368,7 +372,7 @@ pub async fn take_screenshot() -> ToolResult<ScreenshotResult> {
 /// 获取鼠标位置
 #[tauri::command]
 pub fn get_mouse_position() -> ToolResult<MousePosition> {
-    let mut enigo = Enigo::new();
+    let enigo = Enigo::new();
     let (x, y) = enigo.mouse_location();
     
     Ok(MousePosition { x, y })
@@ -387,7 +391,7 @@ pub fn move_mouse(x: i32, y: i32) -> ToolResult<()> {
 #[tauri::command]
 pub fn mouse_click(button: MouseButtonType) -> ToolResult<()> {
     let mut enigo = Enigo::new();
-    enigo.mouse_click(button.into());
+    enigo.mouse_click(convert_mouse_button(button));
     
     Ok(())
 }
@@ -396,8 +400,8 @@ pub fn mouse_click(button: MouseButtonType) -> ToolResult<()> {
 #[tauri::command]
 pub fn mouse_double_click(button: MouseButtonType) -> ToolResult<()> {
     let mut enigo = Enigo::new();
-    enigo.mouse_click(button.into());
-    enigo.mouse_click(button.into());
+    enigo.mouse_click(convert_mouse_button(button));
+    enigo.mouse_click(convert_mouse_button(button));
     
     Ok(())
 }
@@ -406,7 +410,7 @@ pub fn mouse_double_click(button: MouseButtonType) -> ToolResult<()> {
 #[tauri::command]
 pub fn mouse_down(button: MouseButtonType) -> ToolResult<()> {
     let mut enigo = Enigo::new();
-    enigo.mouse_down(button.into());
+    enigo.mouse_down(convert_mouse_button(button));
     
     Ok(())
 }
@@ -415,7 +419,7 @@ pub fn mouse_down(button: MouseButtonType) -> ToolResult<()> {
 #[tauri::command]
 pub fn mouse_up(button: MouseButtonType) -> ToolResult<()> {
     let mut enigo = Enigo::new();
-    enigo.mouse_up(button.into());
+    enigo.mouse_up(convert_mouse_button(button));
     
     Ok(())
 }
@@ -429,13 +433,13 @@ pub fn mouse_drag(from_x: i32, from_y: i32, to_x: i32, to_y: i32, button: MouseB
     enigo.mouse_move_to(from_x, from_y);
     
     // 按下鼠标按钮
-    enigo.mouse_down(button.into());
+    enigo.mouse_down(convert_mouse_button(button));
     
     // 移动到目标位置
     enigo.mouse_move_to(to_x, to_y);
     
     // 释放鼠标按钮
-    enigo.mouse_up(button.into());
+    enigo.mouse_up(convert_mouse_button(button));
     
     Ok(())
 }
@@ -601,9 +605,9 @@ pub enum ScrollDirection {
 #[tauri::command]
 pub fn mouse_triple_click(button: MouseButtonType) -> ToolResult<()> {
     let mut enigo = Enigo::new();
-    enigo.mouse_click(button.into());
-    enigo.mouse_click(button.into());
-    enigo.mouse_click(button.into());
+    enigo.mouse_click(convert_mouse_button(button));
+    enigo.mouse_click(convert_mouse_button(button));
+    enigo.mouse_click(convert_mouse_button(button));
     
     Ok(())
 }
@@ -690,7 +694,7 @@ pub fn set_clipboard(content: String) -> ToolResult<()> {
 }
 
 /// 坐标缩放配置
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ScalingConfig {
     /// 是否启用缩放
     pub enabled: bool,
@@ -752,4 +756,47 @@ pub fn scale_coordinates(x: i32, y: i32, scale_up: bool) -> ToolResult<(i32, i32
     } else {
         Ok((x, y))
     }
+}
+
+/// 点击指定坐标
+#[tauri::command]
+pub async fn click_at(x: i32, y: i32, button: Option<MouseButtonType>, double: Option<bool>) -> ToolResult<()> {
+    let mut enigo = Enigo::new();
+    
+    // 移动到指定位置
+    enigo.mouse_move_to(x, y);
+    
+    // 等待一小段时间确保鼠标已经移动到位
+    sleep(Duration::from_millis(50)).await;
+    
+    // 执行点击
+    if double.unwrap_or(false) {
+        enigo.mouse_click(convert_mouse_button(button.unwrap_or(MouseButtonType::Left)));
+        enigo.mouse_click(convert_mouse_button(button.unwrap_or(MouseButtonType::Left)));
+    } else {
+        enigo.mouse_click(convert_mouse_button(button.unwrap_or(MouseButtonType::Left)));
+    }
+    
+    Ok(())
+}
+
+/// 选择文本（通过三击）
+#[tauri::command]
+pub async fn select_text(x: i32, y: i32) -> ToolResult<()> {
+    let mut enigo = Enigo::new();
+    
+    // 移动到指定位置
+    enigo.mouse_move_to(x, y);
+    
+    // 等待一小段时间确保鼠标已经移动到位
+    sleep(Duration::from_millis(50)).await;
+    
+    // 执行三击选择文本
+    enigo.mouse_click(MouseButton::Left);
+    sleep(Duration::from_millis(50)).await;
+    enigo.mouse_click(MouseButton::Left);
+    sleep(Duration::from_millis(50)).await;
+    enigo.mouse_click(MouseButton::Left);
+    
+    Ok(())
 } 
