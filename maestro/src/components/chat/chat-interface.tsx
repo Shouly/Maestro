@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
 import { AIService, Message, ToolOutput } from "../../services";
-import { Loader2 } from "lucide-react";
+import { Loader2, Image as ImageIcon, Terminal, FileText, Brain, ChevronDown, ChevronUp, Paperclip, X } from "lucide-react";
 
 interface ChatInterfaceProps {
   onToolOutput?: (output: ToolOutput) => void;
@@ -17,6 +17,9 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
   const [thinkingBudget, setThinkingBudget] = useState<number | undefined>(undefined); // 默认不启用思考
   const [enablePromptCaching, setEnablePromptCaching] = useState<boolean>(true); // 默认启用提示缓存
   const [enableTokenEfficientTools, setEnableTokenEfficientTools] = useState<boolean>(true); // 默认启用token高效工具
+  const [expandedThinking, setExpandedThinking] = useState<Record<string, boolean>>({});
+  const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // 加载历史消息
@@ -73,8 +76,44 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     }
   }, []);
 
+  // 处理图片上传
+  const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // 检查文件类型
+    if (!file.type.startsWith('image/')) {
+      setError("只能上传图片文件");
+      return;
+    }
+    
+    // 检查文件大小（限制为5MB）
+    if (file.size > 5 * 1024 * 1024) {
+      setError("图片大小不能超过5MB");
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        // 获取Base64编码的图片数据（去掉前缀）
+        const base64Data = event.target.result.toString().split(',')[1];
+        setUploadedImage(base64Data);
+      }
+    };
+    reader.readAsDataURL(file);
+    
+    // 重置文件输入，以便可以再次选择同一文件
+    e.target.value = '';
+  };
+
+  // 移除上传的图片
+  const removeUploadedImage = () => {
+    setUploadedImage(null);
+  };
+
   const handleSendMessage = async () => {
-    if (!input.trim()) return;
+    if (!input.trim() && !uploadedImage) return;
     
     // 检查API密钥是否设置
     const apiKey = AIService.getApiKey();
@@ -91,9 +130,20 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       timestamp: Date.now(),
     };
     
+    // 如果有上传的图片，添加到工具输出
+    if (uploadedImage) {
+      userMessage.toolOutputs = [
+        {
+          type: "screenshot",
+          content: uploadedImage
+        }
+      ];
+    }
+    
     // 更新消息列表
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
+    setUploadedImage(null);
     setError(null);
     setIsLoading(true);
     
@@ -132,6 +182,102 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     }
   };
 
+  // 切换思考内容的展开/折叠状态
+  const toggleThinking = (messageId: string) => {
+    setExpandedThinking(prev => ({
+      ...prev,
+      [messageId]: !prev[messageId]
+    }));
+  };
+
+  // 渲染工具输出
+  const renderToolOutput = (output: ToolOutput, index: number) => {
+    if (output.error) {
+      return (
+        <div key={index} className="mt-2 p-2 rounded bg-destructive/10 text-destructive text-xs">
+          <div className="font-semibold">错误:</div>
+          <div className="whitespace-pre-wrap">{output.error}</div>
+        </div>
+      );
+    }
+
+    switch (output.type) {
+      case "screenshot":
+        return (
+          <div key={index} className="mt-2 p-2 rounded bg-muted">
+            <div className="flex items-center text-xs font-medium mb-1">
+              <ImageIcon className="h-3 w-3 mr-1" />
+              <span>截图</span>
+            </div>
+            <img 
+              src={`data:image/png;base64,${output.content}`} 
+              alt="截图" 
+              className="max-w-full h-auto rounded border border-border"
+            />
+          </div>
+        );
+      case "command":
+        return (
+          <div key={index} className="mt-2 p-2 rounded bg-muted">
+            <div className="flex items-center text-xs font-medium mb-1">
+              <Terminal className="h-3 w-3 mr-1" />
+              <span>命令输出</span>
+            </div>
+            <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap">{output.content}</pre>
+          </div>
+        );
+      case "text":
+        return (
+          <div key={index} className="mt-2 p-2 rounded bg-muted">
+            <div className="flex items-center text-xs font-medium mb-1">
+              <FileText className="h-3 w-3 mr-1" />
+              <span>文本输出</span>
+            </div>
+            <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap">{output.content}</pre>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  // 渲染思考内容
+  const renderThinking = (thinking: any[], messageId: string) => {
+    const isExpanded = expandedThinking[messageId];
+    
+    if (!thinking || thinking.length === 0) return null;
+    
+    return (
+      <div className="mt-3 border-t border-border pt-2">
+        <button 
+          onClick={() => toggleThinking(messageId)}
+          className="flex items-center text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <Brain className="h-3 w-3 mr-1" />
+          <span>思考过程</span>
+          {isExpanded ? (
+            <ChevronUp className="h-3 w-3 ml-1" />
+          ) : (
+            <ChevronDown className="h-3 w-3 ml-1" />
+          )}
+        </button>
+        
+        {isExpanded && (
+          <div className="mt-2 p-2 rounded bg-muted/50 text-xs">
+            <pre className="whitespace-pre-wrap overflow-auto max-h-60">
+              {thinking.map((block, index) => {
+                if (block.type === "thinking" && block.text) {
+                  return <div key={index} className="mb-2">{block.text}</div>;
+                }
+                return null;
+              })}
+            </pre>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -145,28 +291,18 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                 : "bg-muted"
             )}
           >
+            {/* 消息内容 */}
             <div className="whitespace-pre-wrap">{message.content}</div>
             
             {/* 显示工具输出 */}
             {message.toolOutputs && message.toolOutputs.length > 0 && (
-              <div className="mt-2 text-xs opacity-80">
-                {message.toolOutputs.map((output, index) => (
-                  <div key={index} className="mt-1">
-                    {output.error ? (
-                      <span className="text-destructive">错误: {output.error}</span>
-                    ) : (
-                      <span>
-                        {output.type === "screenshot" ? (
-                          "截图已捕获"
-                        ) : (
-                          `工具输出: ${output.content.substring(0, 50)}${output.content.length > 50 ? '...' : ''}`
-                        )}
-                      </span>
-                    )}
-                  </div>
-                ))}
+              <div className="mt-2">
+                {message.toolOutputs.map((output, index) => renderToolOutput(output, index))}
               </div>
             )}
+            
+            {/* 显示思考内容 */}
+            {message.thinking && message.thinking.length > 0 && renderThinking(message.thinking, message.id)}
           </div>
         ))}
         
@@ -188,6 +324,23 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       </div>
       
       <div className="border-t p-4">
+        {/* 图片预览 */}
+        {uploadedImage && (
+          <div className="mb-2 p-2 border rounded-md relative">
+            <button 
+              onClick={removeUploadedImage}
+              className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+            >
+              <X className="h-3 w-3" />
+            </button>
+            <img 
+              src={`data:image/png;base64,${uploadedImage}`} 
+              alt="上传的图片" 
+              className="max-h-32 rounded"
+            />
+          </div>
+        )}
+        
         <div className="flex items-center space-x-2">
           <input
             type="text"
@@ -203,6 +356,26 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
             disabled={isLoading}
             className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50"
           />
+          
+          {/* 图片上传按钮 */}
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="icon"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isLoading}
+            title="上传图片"
+          >
+            <Paperclip className="h-4 w-4" />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageUpload}
+              className="hidden"
+            />
+          </Button>
+          
           <Button onClick={handleSendMessage} disabled={isLoading}>
             {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "发送"}
           </Button>
