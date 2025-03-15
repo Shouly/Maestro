@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { ChatInterface } from "../components/chat/chat-interface";
-import { ToolOutput } from "../components/tools/tool-output";
 import { ToolOutput as ToolOutputType } from "../services";
 
 export function HomePage() {
-  const [toolOutput, setToolOutput] = useState<{
-    type: "screenshot" | "command" | "text" | "none";
-    content: string;
-  }>({
-    type: "none",
-    content: "",
-  });
-
   const [showWelcome, setShowWelcome] = useState(false);
 
   // 检查是否是首次访问
@@ -22,14 +13,6 @@ export function HomePage() {
     // 标记已访问
     localStorage.setItem("hasVisitedHome", "true");
   }, []);
-
-  // 处理工具输出
-  const handleToolOutput = (output: ToolOutputType) => {
-    setToolOutput({
-      type: output.type,
-      content: output.content,
-    });
-  };
 
   if (showWelcome) {
     return (
@@ -73,12 +56,9 @@ export function HomePage() {
   }
 
   return (
-    <div className="grid h-full grid-cols-1 gap-4 md:grid-cols-2">
+    <div className="h-full">
       <div className="h-full overflow-hidden rounded-lg border">
-        <ChatInterface onToolOutput={handleToolOutput} />
-      </div>
-      <div className="h-full overflow-hidden rounded-lg border">
-        <ToolOutput output={toolOutput.content} type={toolOutput.type} />
+        <ChatInterface />
       </div>
     </div>
   );

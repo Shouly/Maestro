@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, ChangeEvent } from "react";
 import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
 import { AIService, Message, ToolOutput } from "../../services";
-import { Loader2, Image as ImageIcon, Terminal, FileText, Brain, ChevronDown, ChevronUp, Paperclip, X } from "lucide-react";
+import { Loader2, Image as ImageIcon, Terminal, FileText, Brain, ChevronDown, ChevronUp, Paperclip, X, Maximize, Minimize } from "lucide-react";
 
 interface ChatInterfaceProps {
   onToolOutput?: (output: ToolOutput) => void;
@@ -19,6 +19,7 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
   const [enableTokenEfficientTools, setEnableTokenEfficientTools] = useState<boolean>(true); // 默认启用token高效工具
   const [expandedThinking, setExpandedThinking] = useState<Record<string, boolean>>({});
   const [uploadedImage, setUploadedImage] = useState<string | null>(null);
+  const [expandedImages, setExpandedImages] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -190,8 +191,16 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     }));
   };
 
+  // 切换图片的展开/折叠状态
+  const toggleImageExpand = (imageId: string) => {
+    setExpandedImages(prev => ({
+      ...prev,
+      [imageId]: !prev[imageId]
+    }));
+  };
+
   // 渲染工具输出
-  const renderToolOutput = (output: ToolOutput, index: number) => {
+  const renderToolOutput = (output: ToolOutput, index: number, messageId: string) => {
     if (output.error) {
       return (
         <div key={index} className="mt-2 p-2 rounded bg-destructive/10 text-destructive text-xs">
@@ -201,39 +210,81 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       );
     }
 
+    const timestamp = new Date().toLocaleTimeString();
+    const imageId = `${messageId}-${index}`;
+    const isImageExpanded = expandedImages[imageId] || false;
+
     switch (output.type) {
       case "screenshot":
         return (
           <div key={index} className="mt-2 p-2 rounded bg-muted">
-            <div className="flex items-center text-xs font-medium mb-1">
-              <ImageIcon className="h-3 w-3 mr-1" />
-              <span>截图</span>
+            <div className="flex items-center justify-between text-xs font-medium mb-1">
+              <div className="flex items-center">
+                <ImageIcon className="h-3 w-3 mr-1" />
+                <span>截图</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-muted-foreground mr-2">{timestamp}</span>
+                <button 
+                  onClick={() => toggleImageExpand(imageId)}
+                  className="p-1 hover:bg-muted-foreground/10 rounded"
+                  title={isImageExpanded ? "缩小" : "放大"}
+                >
+                  {isImageExpanded ? <Minimize className="h-3 w-3" /> : <Maximize className="h-3 w-3" />}
+                </button>
+              </div>
             </div>
-            <img 
-              src={`data:image/png;base64,${output.content}`} 
-              alt="截图" 
-              className="max-w-full h-auto rounded border border-border"
-            />
+            <div className={isImageExpanded ? "fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4" : ""}>
+              {isImageExpanded && (
+                <div className="relative max-w-full max-h-full overflow-auto">
+                  <button 
+                    onClick={() => toggleImageExpand(imageId)}
+                    className="absolute top-2 right-2 p-1 bg-background rounded-full shadow-md"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <img 
+                    src={`data:image/png;base64,${output.content}`} 
+                    alt="截图" 
+                    className="max-w-full h-auto rounded border border-border"
+                  />
+                </div>
+              )}
+              {!isImageExpanded && (
+                <img 
+                  src={`data:image/png;base64,${output.content}`} 
+                  alt="截图" 
+                  className="max-w-full h-auto rounded border border-border cursor-pointer"
+                  onClick={() => toggleImageExpand(imageId)}
+                />
+              )}
+            </div>
           </div>
         );
       case "command":
         return (
           <div key={index} className="mt-2 p-2 rounded bg-muted">
-            <div className="flex items-center text-xs font-medium mb-1">
-              <Terminal className="h-3 w-3 mr-1" />
-              <span>命令输出</span>
+            <div className="flex items-center justify-between text-xs font-medium mb-1">
+              <div className="flex items-center">
+                <Terminal className="h-3 w-3 mr-1" />
+                <span>命令输出</span>
+              </div>
+              <span className="text-muted-foreground">{timestamp}</span>
             </div>
-            <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap">{output.content}</pre>
+            <pre className="text-xs overflow-auto max-h-60 whitespace-pre-wrap">{output.content}</pre>
           </div>
         );
       case "text":
         return (
           <div key={index} className="mt-2 p-2 rounded bg-muted">
-            <div className="flex items-center text-xs font-medium mb-1">
-              <FileText className="h-3 w-3 mr-1" />
-              <span>文本输出</span>
+            <div className="flex items-center justify-between text-xs font-medium mb-1">
+              <div className="flex items-center">
+                <FileText className="h-3 w-3 mr-1" />
+                <span>文本输出</span>
+              </div>
+              <span className="text-muted-foreground">{timestamp}</span>
             </div>
-            <pre className="text-xs overflow-auto max-h-40 whitespace-pre-wrap">{output.content}</pre>
+            <pre className="text-xs overflow-auto max-h-60 whitespace-pre-wrap">{output.content}</pre>
           </div>
         );
       default:
@@ -280,31 +331,85 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex-1 overflow-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={cn(
-              "flex w-max max-w-[80%] flex-col rounded-lg px-4 py-2 text-sm",
-              message.role === "user"
-                ? "ml-auto bg-primary text-primary-foreground"
-                : "bg-muted"
-            )}
-          >
-            {/* 消息内容 */}
-            <div className="whitespace-pre-wrap">{message.content}</div>
-            
-            {/* 显示工具输出 */}
-            {message.toolOutputs && message.toolOutputs.length > 0 && (
-              <div className="mt-2">
-                {message.toolOutputs.map((output, index) => renderToolOutput(output, index))}
-              </div>
-            )}
-            
-            {/* 显示思考内容 */}
-            {message.thinking && message.thinking.length > 0 && renderThinking(message.thinking, message.id)}
+      <div className="border-b p-2 flex justify-between items-center bg-muted/30">
+        <div className="font-semibold">Maestro AI 助手</div>
+        <div className="flex items-center space-x-2 text-xs">
+          <div className="flex items-center">
+            <span className="mr-1">图像限制:</span>
+            <select 
+              value={onlyNMostRecentImages} 
+              onChange={(e) => {
+                const value = parseInt(e.target.value);
+                setOnlyNMostRecentImages(value);
+                localStorage.setItem("imageLimit", value.toString());
+              }}
+              className="rounded border border-input bg-background px-2 py-1 text-xs"
+            >
+              <option value="0">不限制</option>
+              <option value="1">最近1张</option>
+              <option value="3">最近3张</option>
+              <option value="5">最近5张</option>
+              <option value="10">最近10张</option>
+            </select>
           </div>
-        ))}
+          <div className="flex items-center">
+            <label className="flex items-center">
+              <input 
+                type="checkbox" 
+                checked={enablePromptCaching}
+                onChange={(e) => {
+                  setEnablePromptCaching(e.target.checked);
+                  localStorage.setItem("promptCaching", e.target.checked.toString());
+                }}
+                className="mr-1 h-3 w-3"
+              />
+              <span>启用缓存</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        {messages.length === 0 ? (
+          <div className="flex h-full flex-col items-center justify-center text-muted-foreground">
+            <div className="text-lg font-semibold mb-2">开始与AI助手对话</div>
+            <div className="text-sm max-w-md text-center">
+              您可以要求AI助手执行各种任务，如截取屏幕、控制鼠标、执行命令、编辑文件等。
+              <br /><br />
+              示例: "请截取当前屏幕" 或 "帮我打开计算器应用"
+            </div>
+          </div>
+        ) : (
+          messages.map((message) => (
+            <div
+              key={message.id}
+              className={cn(
+                "flex flex-col rounded-lg px-4 py-2 text-sm",
+                message.role === "user"
+                  ? "ml-auto bg-primary text-primary-foreground max-w-[80%]"
+                  : "mr-auto bg-muted max-w-[90%]"
+              )}
+            >
+              {/* 消息角色标识 */}
+              <div className="text-xs text-muted-foreground mb-1">
+                {message.role === "user" ? "您" : "AI助手"}
+                <span className="ml-2">{new Date(message.timestamp).toLocaleTimeString()}</span>
+              </div>
+              
+              {/* 消息内容 */}
+              <div className="whitespace-pre-wrap">{message.content}</div>
+              
+              {/* 显示工具输出 */}
+              {message.toolOutputs && message.toolOutputs.length > 0 && (
+                <div className="mt-2">
+                  {message.toolOutputs.map((output, index) => renderToolOutput(output, index, message.id))}
+                </div>
+              )}
+              
+              {/* 显示思考内容 */}
+              {message.thinking && message.thinking.length > 0 && renderThinking(message.thinking, message.id)}
+            </div>
+          ))
+        )}
         
         {/* 加载指示器 */}
         {isLoading && (
