@@ -29,10 +29,21 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       const savedMessages = localStorage.getItem("messages");
       if (savedMessages) {
         try {
-          setMessages(JSON.parse(savedMessages));
+          const parsedMessages = JSON.parse(savedMessages);
+          // 检查是否有有效的消息数组
+          if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+            console.log("从本地存储加载了", parsedMessages.length, "条消息");
+            setMessages(parsedMessages);
+          } else {
+            console.log("本地存储中的消息为空数组或无效格式");
+          }
         } catch (error) {
           console.error("加载历史消息失败:", error);
+          // 如果解析失败，清除本地存储中的消息
+          localStorage.removeItem("messages");
         }
+      } else {
+        console.log("本地存储中没有消息");
       }
     };
 
@@ -42,7 +53,12 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
   // 保存消息到本地存储
   useEffect(() => {
     if (messages.length > 0) {
+      console.log("保存", messages.length, "条消息到本地存储");
       localStorage.setItem("messages", JSON.stringify(messages));
+    } else if (messages.length === 0) {
+      // 如果消息列表为空，清除本地存储
+      console.log("消息列表为空，清除本地存储");
+      localStorage.removeItem("messages");
     }
   }, [messages]);
 
@@ -152,79 +168,66 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     setUploadedImage(null);
   };
 
+  // 处理发送消息
   const handleSendMessage = async () => {
-    if (!input.trim() && !uploadedImage) return;
-    
-    // 检查API密钥是否设置
-    const apiKey = AIService.getApiKey();
-    if (!apiKey) {
-      setError("请先在设置页面配置API密钥");
+    if (input.trim() === "" && !uploadedImage) {
       return;
     }
-    
-    // 创建用户消息
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      content: input,
-      timestamp: Date.now(),
-    };
-    
-    // 如果有上传的图片，添加到工具输出
-    if (uploadedImage) {
-      // 验证图片数据
-      if (!isValidBase64(uploadedImage)) {
-        setError("图片数据无效，无法发送");
-        return;
-      }
-      
-      console.log("添加图片到消息，数据长度:", uploadedImage.length);
-      
-      userMessage.toolOutputs = [
-        {
-          type: "screenshot",
-          content: uploadedImage
-        }
-      ];
-    }
-    
-    // 更新消息列表
-    setMessages((prev) => [...prev, userMessage]);
-    setInput("");
-    setUploadedImage(null);
-    setError(null);
+
     setIsLoading(true);
-    
+    setError(null);
+
     try {
-      // 获取最近的消息作为上下文
-      const recentMessages = [...messages, userMessage].slice(-10);
+      // 创建用户消息
+      const userMessage: Message = {
+        id: Date.now().toString(),
+        role: "user",
+        content: input,
+        timestamp: Date.now()
+      };
       
-      // 发送消息到Claude API，现在返回完整的消息历史，并传递图像数量限制和思考预算
-      const updatedMessages = await AIService.sendMessage(
-        recentMessages, 
-        undefined, 
+      // 如果有上传的图片，添加到工具输出
+      if (uploadedImage) {
+        userMessage.toolOutputs = [
+          {
+            type: "screenshot",
+            content: uploadedImage
+          }
+        ];
+      }
+
+      // 更新消息列表
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setInput("");
+      setUploadedImage(null);
+
+      // 发送消息到AI服务
+      const responseMessages = await AIService.sendMessage(
+        updatedMessages,
+        undefined,
         onlyNMostRecentImages,
         thinkingBudget,
         enablePromptCaching
       );
       
-      // 提取新消息（用户消息之后的所有消息）
-      const newMessages = updatedMessages.slice(recentMessages.indexOf(userMessage) + 1);
-      
+      // 获取AI的回复消息（最后一条消息）
+      const aiResponse = responseMessages[responseMessages.length - 1];
+
       // 更新消息列表
-      setMessages((prev) => [...prev.slice(0, prev.length - 1), userMessage, ...newMessages]);
-      
-      // 检查是否有工具输出消息
-      for (const msg of newMessages) {
-        if (msg.toolOutputs && msg.toolOutputs.length > 0 && onToolOutput) {
-          // 通知父组件最新的工具输出
-          onToolOutput(msg.toolOutputs[0]);
-          break;
-        }
+      setMessages(responseMessages);
+
+      // 如果有工具输出，处理它
+      if (aiResponse.toolOutputs && aiResponse.toolOutputs.length > 0 && onToolOutput) {
+        onToolOutput(aiResponse.toolOutputs[0]);
       }
-    } catch (error) {
-      console.error("发送消息失败:", error);
-      setError(`发送消息失败: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (err) {
+      console.error("发送消息时出错:", err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "发送消息时出错，请稍后再试"
+      );
     } finally {
       setIsLoading(false);
     }
@@ -447,10 +450,58 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     console.log("添加测试图片消息");
   };
 
+  // 开始新对话
+  const startNewConversation = () => {
+    console.log("开始新对话函数被调用");
+    
+    // 直接清除所有数据，不显示确认对话框
+    console.log("清除所有消息和记录");
+    
+    try {
+      // 清除消息列表
+      setMessages([]);
+      // 清除输入框
+      setInput("");
+      // 清除上传的图片
+      setUploadedImage(null);
+      // 清除错误信息
+      setError(null);
+      
+      // 清除本地存储中的所有对话相关数据
+      localStorage.clear(); // 清除所有本地存储
+      
+      // 重新设置必要的设置
+      localStorage.setItem("imageLimit", onlyNMostRecentImages.toString());
+      localStorage.setItem("promptCaching", enablePromptCaching.toString());
+      
+      // 显示成功消息
+      setError("新对话已创建，所有历史记录已清除。");
+      
+      // 3秒后清除成功消息
+      setTimeout(() => {
+        setError(null);
+      }, 3000);
+      
+      console.log("开始新对话，所有记录已清除");
+    } catch (err) {
+      console.error("清除对话时出错:", err);
+      setError("清除对话时出错，请重试");
+    }
+  };
+
   return (
     <div className="flex h-full flex-col">
       <div className="border-b p-2 flex justify-between items-center bg-muted/30">
-        <div className="font-semibold">Maestro AI 助手</div>
+        <div className="flex items-center">
+          <div className="font-semibold">Maestro AI 助手</div>
+          <button 
+            onClick={startNewConversation}
+            className="ml-3 px-2 py-1 bg-primary/10 hover:bg-primary/20 text-primary rounded text-xs transition-colors"
+            title="开始新对话"
+          >
+            新对话
+          </button>
+        </div>
         <div className="flex items-center space-x-2 text-xs">
           <div className="flex items-center">
             <span className="mr-1">图像限制:</span>
