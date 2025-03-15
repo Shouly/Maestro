@@ -368,7 +368,7 @@ export class AIService {
         }
         
         const messageParam: MessageParam = {
-          role: msg.role,
+        role: msg.role,
           content: contentBlocks
         };
         
@@ -386,10 +386,10 @@ export class AIService {
         // 准备API调用参数
         console.log("准备API调用参数...");
         const apiParams: any = {
-          model: this.getModel(),
-          messages: claudeMessages,
+        model: this.getModel(),
+        messages: claudeMessages,
           system: systemPrompt || this.getSystemPrompt(),
-          max_tokens: 4000,
+        max_tokens: 4000,
           tools: this.getToolDefinitions(),
         };
         
@@ -449,10 +449,10 @@ export class AIService {
           });
         }
 
-        // 构建响应消息
-        const responseMessage: Message = {
-          id: Date.now().toString(),
-          role: "assistant",
+      // 构建响应消息
+      const responseMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
           content: textContent,
           timestamp: Date.now(),
           thinking: thinkingContent.length > 0 ? thinkingContent : undefined
@@ -489,7 +489,7 @@ export class AIService {
           id: Date.now().toString(),
           role: "user",
           content: "",
-          timestamp: Date.now(),
+        timestamp: Date.now(),
           toolOutputs: toolResults
         };
 
@@ -842,7 +842,7 @@ export class AIService {
           await EditService.strReplace(path, args.pattern, args.replacement);
           console.log("替换完成");
           return {
-            type: "text",
+          type: "text",
             content: `Replaced "${args.pattern}" with "${args.replacement}" in file ${path}`
           };
         default:
@@ -850,7 +850,7 @@ export class AIService {
           console.error(errorMsg);
           throw new Error(errorMsg);
       }
-    } catch (error) {
+      } catch (error) {
       console.error(`文本编辑操作 ${action} 失败:`, error);
       throw error;
     }

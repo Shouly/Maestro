@@ -77,6 +77,21 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     }
   }, []);
 
+  // 验证Base64字符串是否有效
+  const isValidBase64 = (str: string): boolean => {
+    try {
+      // 检查是否只包含Base64字符
+      return /^[A-Za-z0-9+/=]+$/.test(str) && str.length > 0;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  // 获取图片的MIME类型
+  const getImageMimeType = (defaultType = "image/png") => {
+    return localStorage.getItem("lastImageMimeType") || defaultType;
+  };
+
   // 处理图片上传
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -103,6 +118,14 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
         const dataUrl = event.target.result.toString();
         // 获取Base64编码的图片数据（去掉前缀）
         const base64Data = dataUrl.split(',')[1];
+        
+        // 验证Base64数据
+        if (!isValidBase64(base64Data)) {
+          console.error("无效的Base64数据");
+          setError("图片格式无效");
+          return;
+        }
+        
         // 获取MIME类型
         const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
         
@@ -149,13 +172,20 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     
     // 如果有上传的图片，添加到工具输出
     if (uploadedImage) {
+      // 验证图片数据
+      if (!isValidBase64(uploadedImage)) {
+        setError("图片数据无效，无法发送");
+        return;
+      }
+      
+      console.log("添加图片到消息，数据长度:", uploadedImage.length);
+      
       userMessage.toolOutputs = [
         {
           type: "screenshot",
           content: uploadedImage
         }
       ];
-      console.log("添加图片到消息:", uploadedImage.substring(0, 50) + "...");
     }
     
     // 更新消息列表
@@ -237,6 +267,24 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       case "screenshot":
         // 对于截图，我们假设MIME类型是image/png
         const imageMimeType = "image/png";
+        const imageContent = output.content || '';
+        
+        // 验证Base64数据
+        const isValidImage = isValidBase64(imageContent);
+        console.log(`截图数据验证: ${isValidImage ? '有效' : '无效'}, 长度: ${imageContent.length}`);
+        
+        if (!isValidImage || imageContent.length === 0) {
+          return (
+            <div key={index} className="mt-2 p-2 rounded bg-destructive/10 text-destructive text-xs">
+              <div className="font-semibold">图片数据无效</div>
+              <div>无法显示图片，数据格式不正确或为空</div>
+            </div>
+          );
+        }
+        
+        // 构建完整的Data URL
+        const dataUrl = `data:${imageMimeType};base64,${imageContent}`;
+        
         return (
           <div key={index} className="mt-2 p-2 rounded bg-muted">
             <div className="flex items-center justify-between text-xs font-medium mb-1">
@@ -265,9 +313,10 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                     <X className="h-4 w-4" />
                   </button>
                   <img 
-                    src={`data:${imageMimeType};base64,${output.content}`} 
+                    src={dataUrl} 
                     alt="截图" 
                     className="max-w-full h-auto rounded border border-border"
+                    onLoad={() => console.log("图片加载成功:", imageId)}
                     onError={(e) => {
                       console.error("图片加载失败:", e);
                       const imgElement = e.target as HTMLImageElement;
@@ -281,21 +330,28 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                 </div>
               </div>
             ) : (
-              <img 
-                src={`data:${imageMimeType};base64,${output.content}`} 
-                alt="截图" 
-                className="max-w-full h-auto rounded border border-border cursor-pointer"
-                onClick={() => toggleImageExpand(imageId)}
-                onError={(e) => {
-                  console.error("图片加载失败:", e);
-                  const imgElement = e.target as HTMLImageElement;
-                  imgElement.style.display = "none";
-                  const errorDiv = document.createElement("div");
-                  errorDiv.className = "p-2 bg-destructive/10 text-destructive rounded text-xs";
-                  errorDiv.textContent = "图片加载失败";
-                  imgElement.parentNode?.appendChild(errorDiv);
-                }}
-              />
+              <div>
+                <img 
+                  src={dataUrl} 
+                  alt="截图" 
+                  className="max-w-full h-auto rounded border border-border cursor-pointer"
+                  onClick={() => toggleImageExpand(imageId)}
+                  onLoad={() => console.log("图片加载成功:", imageId)}
+                  onError={(e) => {
+                    console.error("图片加载失败:", e);
+                    const imgElement = e.target as HTMLImageElement;
+                    imgElement.style.display = "none";
+                    const errorDiv = document.createElement("div");
+                    errorDiv.className = "p-2 bg-destructive/10 text-destructive rounded text-xs";
+                    errorDiv.textContent = "图片加载失败";
+                    imgElement.parentNode?.appendChild(errorDiv);
+                  }}
+                />
+                {/* 添加图片数据长度信息，帮助调试 */}
+                <div className="text-xs text-muted-foreground mt-1">
+                  图片数据长度: {imageContent.length} 字符
+                </div>
+              </div>
             )}
           </div>
         );
@@ -367,9 +423,28 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     );
   };
 
-  // 获取图片的MIME类型
-  const getImageMimeType = (defaultType = "image/png") => {
-    return localStorage.getItem("lastImageMimeType") || defaultType;
+  // 测试图片显示
+  const testImageDisplay = () => {
+    // 创建一个简单的1x1像素的透明PNG图片的Base64数据
+    const testImageBase64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+    
+    // 创建一个测试消息
+    const testMessage: Message = {
+      id: `test-${Date.now()}`,
+      role: "assistant",
+      content: "这是一个测试图片",
+      timestamp: Date.now(),
+      toolOutputs: [
+        {
+          type: "screenshot",
+          content: testImageBase64
+        }
+      ]
+    };
+    
+    // 添加测试消息到消息列表
+    setMessages(prev => [...prev, testMessage]);
+    console.log("添加测试图片消息");
   };
 
   return (
@@ -409,6 +484,13 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
               <span>启用缓存</span>
             </label>
           </div>
+          <button 
+            onClick={testImageDisplay}
+            className="ml-2 px-2 py-1 bg-primary text-primary-foreground rounded text-xs"
+            title="测试图片显示"
+          >
+            测试图片
+          </button>
         </div>
       </div>
       <div className="flex-1 overflow-auto p-4 space-y-4">
@@ -481,15 +563,28 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
             >
               <X className="h-3 w-3" />
             </button>
-            <img 
-              src={`data:${getImageMimeType()};base64,${uploadedImage}`} 
-              alt="上传的图片" 
-              className="max-h-32 rounded"
-              onError={(e) => {
-                console.error("预览图片加载失败:", e);
-                setError("图片预览加载失败");
-              }}
-            />
+            
+            {isValidBase64(uploadedImage) ? (
+              <>
+                <img 
+                  src={`data:${getImageMimeType()};base64,${uploadedImage}`} 
+                  alt="上传的图片" 
+                  className="max-h-32 rounded"
+                  onLoad={() => console.log("预览图片加载成功")}
+                  onError={(e) => {
+                    console.error("预览图片加载失败:", e);
+                    setError("图片预览加载失败");
+                  }}
+                />
+                <div className="text-xs text-muted-foreground mt-1">
+                  图片数据长度: {uploadedImage.length} 字符
+                </div>
+              </>
+            ) : (
+              <div className="p-2 bg-destructive/10 text-destructive rounded text-xs">
+                图片数据无效，无法预览
+              </div>
+            )}
           </div>
         )}
         
