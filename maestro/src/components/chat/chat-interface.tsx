@@ -94,13 +94,29 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
       return;
     }
     
+    console.log("开始处理图片上传:", file.name, file.type, file.size);
+    
     const reader = new FileReader();
     reader.onload = (event) => {
       if (event.target?.result) {
+        // 获取完整的Data URL
+        const dataUrl = event.target.result.toString();
         // 获取Base64编码的图片数据（去掉前缀）
-        const base64Data = event.target.result.toString().split(',')[1];
+        const base64Data = dataUrl.split(',')[1];
+        // 获取MIME类型
+        const mimeType = dataUrl.split(',')[0].split(':')[1].split(';')[0];
+        
+        console.log("图片读取完成，MIME类型:", mimeType, "Base64长度:", base64Data.length);
+        
+        // 存储图片数据
         setUploadedImage(base64Data);
+        // 在本地存储中保存MIME类型
+        localStorage.setItem("lastImageMimeType", mimeType);
       }
+    };
+    reader.onerror = (error) => {
+      console.error("图片读取失败:", error);
+      setError("图片读取失败");
     };
     reader.readAsDataURL(file);
     
@@ -139,6 +155,7 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
           content: uploadedImage
         }
       ];
+      console.log("添加图片到消息:", uploadedImage.substring(0, 50) + "...");
     }
     
     // 更新消息列表
@@ -213,9 +230,13 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
     const timestamp = new Date().toLocaleTimeString();
     const imageId = `${messageId}-${index}`;
     const isImageExpanded = expandedImages[imageId] || false;
+    
+    console.log(`渲染工具输出 [${index}]:`, output.type, output.content ? `内容长度: ${output.content.length}` : "无内容");
 
     switch (output.type) {
       case "screenshot":
+        // 对于截图，我们假设MIME类型是image/png
+        const imageMimeType = "image/png";
         return (
           <div key={index} className="mt-2 p-2 rounded bg-muted">
             <div className="flex items-center justify-between text-xs font-medium mb-1">
@@ -234,8 +255,8 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                 </button>
               </div>
             </div>
-            <div className={isImageExpanded ? "fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4" : ""}>
-              {isImageExpanded && (
+            {isImageExpanded ? (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 p-4">
                 <div className="relative max-w-full max-h-full overflow-auto">
                   <button 
                     onClick={() => toggleImageExpand(imageId)}
@@ -244,21 +265,38 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
                     <X className="h-4 w-4" />
                   </button>
                   <img 
-                    src={`data:image/png;base64,${output.content}`} 
+                    src={`data:${imageMimeType};base64,${output.content}`} 
                     alt="截图" 
                     className="max-w-full h-auto rounded border border-border"
+                    onError={(e) => {
+                      console.error("图片加载失败:", e);
+                      const imgElement = e.target as HTMLImageElement;
+                      imgElement.style.display = "none";
+                      const errorDiv = document.createElement("div");
+                      errorDiv.className = "p-4 bg-destructive/10 text-destructive rounded";
+                      errorDiv.textContent = "图片加载失败";
+                      imgElement.parentNode?.appendChild(errorDiv);
+                    }}
                   />
                 </div>
-              )}
-              {!isImageExpanded && (
-                <img 
-                  src={`data:image/png;base64,${output.content}`} 
-                  alt="截图" 
-                  className="max-w-full h-auto rounded border border-border cursor-pointer"
-                  onClick={() => toggleImageExpand(imageId)}
-                />
-              )}
-            </div>
+              </div>
+            ) : (
+              <img 
+                src={`data:${imageMimeType};base64,${output.content}`} 
+                alt="截图" 
+                className="max-w-full h-auto rounded border border-border cursor-pointer"
+                onClick={() => toggleImageExpand(imageId)}
+                onError={(e) => {
+                  console.error("图片加载失败:", e);
+                  const imgElement = e.target as HTMLImageElement;
+                  imgElement.style.display = "none";
+                  const errorDiv = document.createElement("div");
+                  errorDiv.className = "p-2 bg-destructive/10 text-destructive rounded text-xs";
+                  errorDiv.textContent = "图片加载失败";
+                  imgElement.parentNode?.appendChild(errorDiv);
+                }}
+              />
+            )}
           </div>
         );
       case "command":
@@ -327,6 +365,11 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
         )}
       </div>
     );
+  };
+
+  // 获取图片的MIME类型
+  const getImageMimeType = (defaultType = "image/png") => {
+    return localStorage.getItem("lastImageMimeType") || defaultType;
   };
 
   return (
@@ -439,9 +482,13 @@ export function ChatInterface({ onToolOutput }: ChatInterfaceProps) {
               <X className="h-3 w-3" />
             </button>
             <img 
-              src={`data:image/png;base64,${uploadedImage}`} 
+              src={`data:${getImageMimeType()};base64,${uploadedImage}`} 
               alt="上传的图片" 
               className="max-h-32 rounded"
+              onError={(e) => {
+                console.error("预览图片加载失败:", e);
+                setError("图片预览加载失败");
+              }}
             />
           </div>
         )}
