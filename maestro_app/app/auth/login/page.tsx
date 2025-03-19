@@ -41,14 +41,23 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-r from-[rgb(var(--color-background))] to-[rgba(var(--color-foreground),0.05)]">
-      <Card className="w-full max-w-md shadow-lg glass">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">登录到 Maestro</CardTitle>
-          <CardDescription>
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-base">
+      <div 
+        className="absolute inset-0 z-0" 
+        style={{
+          backgroundImage: "radial-gradient(circle at 25% 25%, rgba(var(--color-primary), 0.05) 0%, transparent 50%)",
+          backgroundAttachment: "fixed"
+        }}
+      />
+      
+      <Card className="w-full max-w-md shadow-lg glassmorphism z-10">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center">登录到 Maestro</CardTitle>
+          <CardDescription className="text-center">
             请使用您的账号登录
           </CardDescription>
         </CardHeader>
+        
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
@@ -62,6 +71,7 @@ export default function LoginPage() {
                 required
               />
             </div>
+            
             <div className="space-y-2">
               <Label htmlFor="password">密码</Label>
               <Input 
@@ -72,20 +82,30 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <p className="text-xs opacity-70">提示：测试环境下密码为 &quot;password&quot;</p>
+              <p className="text-xs text-base-70">提示：测试环境下密码为 &quot;password&quot;</p>
             </div>
-            {error && <p className="text-sm text-[rgb(var(--color-error))]">{error}</p>}
+            
+            {error && (
+              <div className="p-2 text-sm text-error bg-error-10 border border-error-20 rounded-md">
+                {error}
+              </div>
+            )}
+            
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? '登录中...' : '登录'}
             </Button>
           </form>
         </CardContent>
+        
         <CardFooter className="flex justify-center">
-          <p className="text-sm opacity-70">
+          <p className="text-sm text-base-70">
             没有账号？{" "}
-            <Button variant="link" asChild className="p-0">
-              <Link href="/auth/register">注册</Link>
-            </Button>
+            <Link 
+              href="/auth/register"
+              className="text-primary hover:underline"
+            >
+              注册
+            </Link>
           </p>
         </CardFooter>
       </Card>

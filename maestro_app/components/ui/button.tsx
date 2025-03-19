@@ -5,27 +5,28 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--color-primary),0.5)] focus-visible:ring-offset-1 focus-visible:ring-offset-[rgb(var(--color-background))] aria-invalid:ring-[rgba(var(--color-error),0.2)] aria-invalid:border-[rgb(var(--color-error))] relative overflow-hidden",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 overflow-hidden relative focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-[rgb(var(--color-background))]",
   {
     variants: {
       variant: {
         default:
-          "bg-[rgb(var(--color-primary))] text-white shadow-sm hover:bg-[rgb(var(--color-primary-dark))] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
+          "bg-primary text-white shadow-sm hover:bg-primary-dark active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
         destructive:
-          "bg-[rgb(var(--color-error))] text-white shadow-sm hover:bg-[rgba(var(--color-error),0.9)] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
+          "bg-error text-white shadow-sm hover:bg-[rgba(var(--color-error),0.9)] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
         outline:
-          "border border-[rgb(var(--color-border))] bg-[rgb(var(--color-background))] shadow-sm hover:bg-[rgba(var(--color-foreground),0.05)] hover:text-[rgb(var(--color-primary))] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
+          "border border-border bg-base shadow-sm hover:bg-muted hover:text-primary active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
         secondary:
-          "bg-[rgba(var(--color-foreground),0.05)] text-[rgb(var(--color-foreground))] shadow-sm hover:bg-[rgba(var(--color-foreground),0.1)] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
+          "bg-primary-10 text-primary shadow-sm hover:bg-primary-20 active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
         ghost:
-          "hover:bg-[rgba(var(--color-foreground),0.05)] active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
-        link: "text-[rgb(var(--color-primary))] underline-offset-4 hover:underline",
+          "bg-transparent text-base hover:bg-muted active:scale-[0.98] transition-transform duration-[var(--transition-fast)]",
+        link: 
+          "text-primary bg-transparent underline-offset-4 hover:underline",
       },
       size: {
-        default: "h-9 px-4 py-2 has-[>svg]:px-3",
-        sm: "h-8 rounded-md gap-1.5 px-3 has-[>svg]:px-2.5",
-        lg: "h-10 rounded-md px-6 has-[>svg]:px-4",
-        icon: "size-9",
+        default: "h-10 px-4 py-2",
+        sm: "h-8 rounded-md px-3 text-xs",
+        lg: "h-12 rounded-md px-6 text-base",
+        icon: "h-10 w-10 p-0",
       },
     },
     defaultVariants: {
@@ -47,7 +48,7 @@ function Button({
   }) {
   const Comp = asChild ? Slot : "button"
   
-  // 添加涟漪效果的处理函数
+  // 创建涟漪效果函数
   const handleRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
     const button = e.currentTarget;
     const rect = button.getBoundingClientRect();
@@ -56,44 +57,49 @@ function Button({
     
     const ripple = document.createElement('span');
     ripple.style.position = 'absolute';
-    ripple.style.width = '0';
-    ripple.style.height = '0';
+    ripple.style.width = '100px';
+    ripple.style.height = '100px';
     ripple.style.borderRadius = '50%';
-    ripple.style.transform = 'translate(-50%, -50%)';
-    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.5)';
+    ripple.style.backgroundColor = 'rgba(255, 255, 255, 0.4)';
+    ripple.style.transform = 'translate(-50%, -50%) scale(0)';
+    ripple.style.animation = 'ripple-effect 0.8s ease-out forwards';
     ripple.style.left = `${x}px`;
     ripple.style.top = `${y}px`;
-    ripple.style.pointerEvents = 'none';
+    
+    // 创建并添加动画
+    const keyframes = `
+      @keyframes ripple-effect {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0.8;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(2);
+          opacity: 0;
+        }
+      }
+    `;
+    
+    const style = document.createElement('style');
+    style.innerHTML = keyframes;
+    document.head.appendChild(style);
     
     button.appendChild(ripple);
     
-    // 设置动画
     setTimeout(() => {
-      ripple.style.width = '300px';
-      ripple.style.height = '300px';
-      ripple.style.opacity = '0';
-      ripple.style.transition = 'all 0.6s ease-out';
-      
-      // 完成后删除
-      setTimeout(() => {
-        button.removeChild(ripple);
-      }, 600);
-    }, 10);
+      ripple.remove();
+      style.remove();
+    }, 800);
   };
-
+  
   return (
     <Comp
-      data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-        if (props.onClick) {
-          props.onClick(e);
-        }
-        if (!asChild) {
-          handleRipple(e);
-        }
-      }}
       {...props}
+      onClick={(e) => {
+        handleRipple(e);
+        props.onClick?.(e);
+      }}
     />
   )
 }
