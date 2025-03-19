@@ -24,6 +24,7 @@ export default function LoginPage() {
     
     try {
       const success = await login(email, password);
+
       if (success) {
         // 登录成功后设置 cookie 供中间件使用
         document.cookie = `maestro_auth=true; path=/; max-age=${60 * 60 * 24 * 30}`; // 30天
@@ -40,11 +41,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-r from-[var(--color-background)] to-[var(--color-muted)]">
-      <Card className="w-full max-w-md shadow-lg bg-[var(--color-card)]">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-r from-[rgb(var(--color-background))] to-[rgba(var(--color-foreground),0.05)]">
+      <Card className="w-full max-w-md shadow-lg glass">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-[var(--color-card-foreground)]">登录到 Maestro</CardTitle>
-          <CardDescription className="text-[var(--color-muted-foreground)]">
+          <CardTitle className="text-2xl font-bold">登录到 Maestro</CardTitle>
+          <CardDescription>
             请使用您的账号登录
           </CardDescription>
         </CardHeader>
@@ -71,18 +72,18 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <p className="text-xs text-[var(--color-muted-foreground)]">提示：测试环境下密码为 "password"</p>
+              <p className="text-xs opacity-70">提示：测试环境下密码为 &quot;password&quot;</p>
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full bg-primary" disabled={isLoading}>
+            {error && <p className="text-sm text-[rgb(var(--color-error))]">{error}</p>}
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? '登录中...' : '登录'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-[var(--color-muted-foreground)]">
+          <p className="text-sm opacity-70">
             没有账号？{" "}
-            <Button variant="link" asChild className="p-0 text-primary">
+            <Button variant="link" asChild className="p-0">
               <Link href="/auth/register">注册</Link>
             </Button>
           </p>

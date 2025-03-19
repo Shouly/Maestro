@@ -102,7 +102,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
           {/* 对话历史列表将在这里 */}
           <div className="space-y-2">
             <div className="animate-pulse space-y-3">
@@ -163,7 +163,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-4">
+        <div className="flex-1 overflow-y-auto p-4 scrollbar-thin">
           {children}
         </div>
       </main>
@@ -194,7 +194,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto p-2">
+        <div className="flex-1 overflow-y-auto p-2 scrollbar-thin">
           {/* 工件列表将在这里 */}
           <div className="space-y-2">
             <div className="animate-pulse space-y-3">

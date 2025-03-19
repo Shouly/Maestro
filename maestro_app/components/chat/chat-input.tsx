@@ -6,8 +6,13 @@ import { Button } from '../ui/button';
 import TextareaAutosize from 'react-textarea-autosize';
 import { cn } from '@/lib/utils';
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 interface ChatInputProps {
-  onSendMessage?: (message: any) => void;
+  onSendMessage?: (message: Message) => void;
 }
 
 export default function ChatInput({ onSendMessage }: ChatInputProps) {

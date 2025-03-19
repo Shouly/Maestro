@@ -5,12 +5,18 @@ import ChatInput from "@/components/chat/chat-input";
 import Image from "next/image";
 import { useAuth } from "@/lib/auth-provider";
 
+// 定义消息类型接口
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export default function DashboardPage() {
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   
-  const addMessage = (message: any) => {
+  const addMessage = (message: Message) => {
     setMessages(prevMessages => [...prevMessages, message]);
   };
 
