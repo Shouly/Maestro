@@ -40,11 +40,11 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-slate-900 dark:to-slate-800">
-      <Card className="w-full max-w-md shadow-lg bg-white dark:bg-slate-950">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4 bg-gradient-to-r from-[var(--color-background)] to-[var(--color-muted)]">
+      <Card className="w-full max-w-md shadow-lg bg-[var(--color-card)]">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold text-slate-800 dark:text-slate-100">登录到 Maestro</CardTitle>
-          <CardDescription className="text-slate-600 dark:text-slate-400">
+          <CardTitle className="text-2xl font-bold text-[var(--color-card-foreground)]">登录到 Maestro</CardTitle>
+          <CardDescription className="text-[var(--color-muted-foreground)]">
             请使用您的账号登录
           </CardDescription>
         </CardHeader>
@@ -71,18 +71,18 @@ export default function LoginPage() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
-              <p className="text-xs text-slate-500 dark:text-slate-400">提示：测试环境下密码为 "password"</p>
+              <p className="text-xs text-[var(--color-muted-foreground)]">提示：测试环境下密码为 "password"</p>
             </div>
             {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button type="submit" className="w-full bg-[#0090FF]" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-primary" disabled={isLoading}>
               {isLoading ? '登录中...' : '登录'}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+          <p className="text-sm text-[var(--color-muted-foreground)]">
             没有账号？{" "}
-            <Button variant="link" asChild className="p-0 text-[#0090FF]">
+            <Button variant="link" asChild className="p-0 text-primary">
               <Link href="/auth/register">注册</Link>
             </Button>
           </p>

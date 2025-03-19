@@ -21,7 +21,7 @@ export default function ChatInput({ onSendMessage, isLoading = false }: ChatInpu
   };
 
   return (
-    <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
+    <div className="p-4 border-t border-[var(--color-border)] bg-[var(--color-background)]">
       <form onSubmit={handleSubmit} className="max-w-3xl mx-auto">
         <div className="flex gap-2">
           <Input 
@@ -32,7 +32,7 @@ export default function ChatInput({ onSendMessage, isLoading = false }: ChatInpu
             disabled={isLoading}
           />
           <Button 
-            className="bg-[#0090FF] hover:bg-blue-600"
+            className="bg-primary hover:bg-primary-600"
             type="submit"
             disabled={isLoading || !message.trim()}
           >
@@ -40,10 +40,10 @@ export default function ChatInput({ onSendMessage, isLoading = false }: ChatInpu
           </Button>
         </div>
         <div className="mt-2 flex justify-between">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
+          <div className="text-sm text-[var(--color-muted-foreground)]">
             模型：未选择
           </div>
-          <Button variant="ghost" size="sm" className="text-[#0090FF]">
+          <Button variant="ghost" size="sm" className="text-primary">
             选择模型
           </Button>
         </div>
