@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { SendHorizontal } from 'lucide-react';
+import { SendHorizontal, Loader2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import TextareaAutosize from 'react-textarea-autosize';
+import { cn } from '@/lib/utils';
 
 interface ChatInputProps {
   onSendMessage?: (message: any) => void;
@@ -12,6 +13,7 @@ interface ChatInputProps {
 export default function ChatInput({ onSendMessage }: ChatInputProps) {
   const [input, setInput] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 自动聚焦输入框
@@ -43,14 +45,14 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
             role: 'assistant',
             content: `这是对 "${input.trim()}" 的模拟响应。在实际应用中，这将由AI生成。`
           });
-        }, 500);
+          setIsSubmitting(false);
+        }, 800);
       }
       
       // 清空输入
       setInput('');
     } catch (error) {
       console.error('发送消息时出错:', error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -64,29 +66,51 @@ export default function ChatInput({ onSendMessage }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="relative">
-      <div className="glass-input flex items-end rounded-xl p-3">
+      <div 
+        className={cn(
+          "glass flex items-end rounded-xl p-3 transition-all duration-[var(--transition-normal)]",
+          isFocused && "shadow-md border-[rgba(var(--color-primary),0.5)]",
+          isSubmitting && "opacity-80"
+        )}
+      >
         <TextareaAutosize
           ref={textareaRef}
           placeholder="输入您的消息..."
-          className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 focus:outline-none"
+          className={cn(
+            "flex-1 bg-transparent border-none resize-none max-h-32 focus:outline-none",
+            "transition-all duration-[var(--transition-normal)]"
+          )}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
+          onFocus={() => setIsFocused(true)}
+          onBlur={() => setIsFocused(false)}
           disabled={isSubmitting}
           minRows={1}
           maxRows={5}
+          aria-label="聊天输入框"
         />
         <Button 
           type="submit" 
-          className="ml-2 gradient-btn rounded-xl aspect-square p-2" 
+          variant="default"
+          size="icon"
+          className={cn(
+            "ml-2 rounded-xl p-2",
+            (!input.trim() || isSubmitting) && "opacity-50"
+          )}
           disabled={isSubmitting || !input.trim()}
           aria-label="发送消息"
         >
-          <SendHorizontal className="h-5 w-5" />
+          {isSubmitting ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <SendHorizontal className="h-5 w-5" />
+          )}
         </Button>
       </div>
-      <div className="text-xs text-right mt-1 opacity-60">
-        按 <kbd className="px-1 rounded border">Enter</kbd> 发送，<kbd className="px-1 rounded border">Shift</kbd>+<kbd className="px-1 rounded border">Enter</kbd> 换行
+      <div className="text-xs text-right mt-1 opacity-60 transition-opacity duration-[var(--transition-fast)] hover:opacity-100">
+        按 <kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Enter</kbd> 发送，
+        <kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Shift</kbd>+<kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Enter</kbd> 换行
       </div>
     </form>
   );
