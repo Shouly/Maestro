@@ -1,10 +1,3 @@
----
-description: Apply these rules when making changes to the project
-globs: 
-alwaysApply: true
----
-
-Update this rule if user requested changes to the project requirement, etc.
 # Maestro AI 应用流程文档
 
 ## 引导和注册/登录

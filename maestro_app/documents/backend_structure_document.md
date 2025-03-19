@@ -1,10 +1,3 @@
----
-description: Apply these rules when making changes to the project
-globs: 
-alwaysApply: true
----
-
-Update this rule if user requested changes to the project requirement, etc.
 # Maestro AI Chat Assistant - Backend Structure Document
 
 This document explains the backend architecture and infrastructure for Maestro in everyday language. Maestro is designed to offer a seamless, reliable experience when communicating with multiple AI models. Below is an overview of the design, components, and strategies used to support scalability, security, and performance.

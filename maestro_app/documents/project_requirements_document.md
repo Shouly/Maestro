@@ -1,10 +1,3 @@
----
-description: Apply these rules when making changes to the project
-globs: 
-alwaysApply: true
----
-
-Update this rule if user requested changes to the project requirement, etc.
 # 项目需求文档
 
 ## 1. 项目概述

@@ -1,10 +1,3 @@
----
-description: Apply these rules when making changes to the project
-globs: 
-alwaysApply: true
----
-
-Update this rule if user requested changes to the project requirement, etc.
 # Maestro AI 聊天助手 技术栈文档
 
 本文档使用通俗易懂的语言，介绍了构建 Maestro 项目所采用的技术栈。无论你是技术专家还是非技术用户，都可以通过这份文档了解每项技术背后的理由以及它们如何协同工作来构建一个高效、跨平台的 AI 聊天助手。
