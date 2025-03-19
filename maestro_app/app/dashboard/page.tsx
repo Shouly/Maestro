@@ -1,6 +1,4 @@
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import ChatInput from "@/components/chat/chat-input";
 
 export default function DashboardPage() {
   return (
@@ -30,26 +28,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* 聊天输入区域 */}
-      <div className="p-4 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950">
-        <div className="max-w-3xl mx-auto flex gap-2">
-          <Input 
-            placeholder="输入您的问题..." 
-            className="flex-1"
-          />
-          <Button className="bg-[#0090FF] hover:bg-blue-600">
-            发送
-          </Button>
-        </div>
-        <div className="max-w-3xl mx-auto mt-2 flex justify-between">
-          <div className="text-sm text-slate-500 dark:text-slate-400">
-            模型：未选择
-          </div>
-          <Button variant="ghost" size="sm" className="text-[#0090FF]">
-            选择模型
-          </Button>
-        </div>
-      </div>
+      {/* 使用客户端聊天输入组件 */}
+      <ChatInput />
     </div>
   );
 } 

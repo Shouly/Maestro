@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Home() {
   return (
@@ -18,12 +19,9 @@ export default function Home() {
           </p>
           <div className="flex justify-center">
             <img 
-              src="/logo.svg" 
+              src="https://via.placeholder.com/150?text=Maestro" 
               alt="Maestro Logo" 
               className="h-24 w-auto" 
-              onError={(e) => {
-                e.currentTarget.src = "https://via.placeholder.com/150?text=Maestro";
-              }}
             />
           </div>
         </CardContent>

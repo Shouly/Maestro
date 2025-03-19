@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
+import MCPForm from "@/components/mcp/mcp-form";
 import Link from "next/link";
 
 export default function MCPSettingsPage() {
@@ -40,41 +39,8 @@ export default function MCPSettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  服务器名称
-                </label>
-                <Input placeholder="例如：我的本地 MCP 服务器" />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  服务器 URL
-                </label>
-                <Input placeholder="例如：http://localhost:8000" />
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  API 密钥（如需要）
-                </label>
-                <Input placeholder="可选：输入服务器API密钥" type="password" />
-              </div>
-              
-              <div className="flex items-center space-x-2">
-                <Switch id="mcp-enabled" />
-                <label htmlFor="mcp-enabled" className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                  启用此 MCP 服务器
-                </label>
-              </div>
-            </form>
+            <MCPForm />
           </CardContent>
-          <CardFooter>
-            <Button className="bg-[#0090FF] hover:bg-blue-600">
-              保存 MCP 服务器
-            </Button>
-          </CardFooter>
         </Card>
 
         <Card>
