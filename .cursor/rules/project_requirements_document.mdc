@@ -1,6 +1,6 @@
 ---
 description: Apply these rules when making changes to the project
-globs:
+globs: 
 alwaysApply: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 description: Apply these rules when making changes to the project
-globs:
+globs: 
 alwaysApply: true
 ---
 
@@ -17,8 +17,8 @@ Update this rule if user requested changes to the project requirement, etc.
 
 *   **Directory Rules:**
 
-    *   **Next.js 14 App Router:** Enforce an `app/` directory structure with nested route folders such as `app/[route]/page.tsx` to support React Server Components and dynamic routes.
-    *   Example 1: "Next.js 14 (App Router)" → `app/[route]/page.tsx` conventions
+    *   **Next.js 15 App Router:** Enforce an `app/` directory structure with nested route folders such as `app/[route]/page.tsx` to support React Server Components and dynamic routes.
+    *   Example 1: "Next.js 15 (App Router)" → `app/[route]/page.tsx` conventions
     *   Example 2: "Next.js (Pages Router)" → `pages/[route].tsx` pattern (not used in this project)
     *   Example 3: "React Router 6" → `src/routes/` with `createBrowserRouter` (not applicable here)
 
@@ -26,7 +26,7 @@ Update this rule if user requested changes to the project requirement, etc.
 
 *   **Versioned Structure:**
 
-    *   **app/api:** Next.js 14 API routes with Route Handlers for backend interactions such as chat history sync and MCP server communications.
+    *   **app/api:** Next.js 15 API routes with Route Handlers for backend interactions such as chat history sync and MCP server communications.
     *   **app/auth:** Contains authentication flows powered by Clerk Auth, e.g., `app/auth/login/page.tsx` for secure login screens.
     *   **app/mcp:** Dedicated folder for MCP server configuration pages to manage custom tool extensions.
     *   **app/ui:** Centralized folder for UI components leveraging Shadcn UI, Tailwind CSS, and Framer Motion for animations.
@@ -36,14 +36,14 @@ Update this rule if user requested changes to the project requirement, etc.
 *   **Stack-Versioned Patterns:**
 
     *   **app/dashboard/layout.tsx:** Defines the root layout for the application, enforcing consistent theming (light/dark modes with a bright blue accent #0090FF).
-    *   **app/api/[endpoint]/route.ts:** Implements API route handlers conforming to Next.js 14 standards.
+    *   **app/api/[endpoint]/route.ts:** Implements API route handlers conforming to Next.js 15 standards.
     *   **app/auth/login/page.tsx:** Custom authentication page utilizing Clerk Auth and server actions.
 
 ## Tech Stack Rules
 
 *   **Version Enforcement:**
 
-    *   **next@14:** App Router required, no use of `getInitialProps`; all routing should follow the `app/` directory conventions.
+    *   **next@15:** App Router required, no use of `getInitialProps`; all routing should follow the `app/` directory conventions.
     *   **tailwindcss@latest:** Utility-first CSS framework to be configured with PurgeCSS for production optimizations.
     *   **typescript@latest:** Strict type checking enabled across the project for improved maintainability.
     *   **shadcn-ui:** Component library integration must adhere to design guidelines with high contrast and minimalist layouts.
@@ -62,7 +62,7 @@ Update this rule if user requested changes to the project requirement, etc.
 
 *   **Stack-Aligned Flow:**
 
-    *   Example: "Next.js 14 Auth Flow → `app/auth/login/page.tsx` uses server actions to securely handle login and authentication via Clerk Auth."
+    *   Example: "Next.js 15 Auth Flow → `app/auth/login/page.tsx` uses server actions to securely handle login and authentication via Clerk Auth."
     *   Example: "MCP Configuration Flow → `app/mcp/settings/page.tsx` provides UI for managing custom MCP server configurations and tool extensions."
 
 ## Best Practices
@@ -71,7 +71,7 @@ Update this rule if user requested changes to the project requirement, etc.
 
     *   Use the App Router structure exclusively; avoid mixing Pages Router patterns.
     *   Leverage Server Components for optimal performance and security.
-    *   Utilize built-in routing and data fetching methods provided by Next.js 14.
+    *   Utilize built-in routing and data fetching methods provided by Next.js 15.
 
 *   **Tailwind CSS**
 
@@ -111,8 +111,8 @@ Update this rule if user requested changes to the project requirement, etc.
 
 ## Rules
 
-*   Derive folder/file patterns **directly** from the tech stack versions specified (e.g., Next.js 14 with App Router).
-*   If Next.js 14 App Router is used, enforce the `app/` directory with nested route folders exclusively.
+*   Derive folder/file patterns **directly** from the tech stack versions specified (e.g., Next.js 15 with App Router).
+*   If Next.js 15 App Router is used, enforce the `app/` directory with nested route folders exclusively.
 *   If Pages Router (or any other routing system) was chosen, use `pages/*.tsx` flat structure—but do not mix these with App Router patterns.
 *   Mirror this logic for other frameworks (e.g., React Router, SvelteKit) by adhering to their versioned file structures.
-*   Never mix different version patterns; for instance, do not include a `pages/` directory in a Next.js 14 App Router project.
+*   Never mix different version patterns; for instance, do not include a `pages/` directory in a Next.js 15 App Router project.
