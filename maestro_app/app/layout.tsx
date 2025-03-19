@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { AuthProvider } from "@/lib/auth-provider";
+import { ThemeProvider } from "@/lib/theme-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -19,11 +20,17 @@ export default function RootLayout({
   return (
     <AuthProvider>
       <html lang="zh-CN" suppressHydrationWarning>
-        <body className={cn(
-          "min-h-screen bg-background font-sans antialiased",
-          inter.className
-        )}>
-          {children}
+        <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1" />
+        </head>
+        <body className={cn(inter.className)}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+          >
+            {children}
+          </ThemeProvider>
         </body>
       </html>
     </AuthProvider>

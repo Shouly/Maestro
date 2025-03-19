@@ -44,7 +44,7 @@ Update this rule if user requested changes to the project requirement, etc.
 *   **Version Enforcement:**
 
     *   **next@15:** App Router required, no use of `getInitialProps`; all routing should follow the `app/` directory conventions.
-    *   **tailwindcss@latest:** Utility-first CSS framework to be configured with PurgeCSS for production optimizations.
+    *   **tailwindcss@v4.0:** Utility-first CSS framework to be configured with PurgeCSS for production optimizations.
     *   **typescript@latest:** Strict type checking enabled across the project for improved maintainability.
     *   **shadcn-ui:** Component library integration must adhere to design guidelines with high contrast and minimalist layouts.
     *   **clerk-auth:** Enforce secure authentication flows using Clerk SDK with multi-option login integrations.
@@ -90,12 +90,6 @@ Update this rule if user requested changes to the project requirement, etc.
     *   Use pre-built components to maintain design consistency.
     *   Customize UI elements to adhere to the minimalist and geometric design language.
     *   Ensure components are accessible and responsive.
-
-*   **Clerk Auth**
-
-    *   Implement secure authentication flows using Clerk’s SDK.
-    *   Support multiple login methods and ensure proper session handling.
-    *   Regularly update and patch security vulnerabilities.
 
 *   **Tauri & Rust**
 
