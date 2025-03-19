@@ -1,205 +1,296 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* 主题色调 - 亮蓝色 #0090FF 作为核心 */
+  --color-primary: 0, 144, 255;     /* #0090FF - 主要强调色 */
+  --color-primary-light: 77, 178, 255;  /* #4DB2FF - 次要强调色 */
+  --color-primary-dark: 0, 110, 196;    /* #006EC4 - 深色强调 */
+  
+  /* 中性色 - 亮色模式 */
+  --color-background: 255, 255, 255;    /* 纯白背景 */
+  --color-foreground: 26, 26, 26;       /* 近黑文本 */
+  --color-card: 255, 255, 255;          /* 卡片背景 */
+  --color-muted: 115, 115, 115;         /* 次要文本 */
+  --color-border: 230, 230, 230;        /* 边框色 */
+  
+  /* 功能色 */
+  --color-success: 22, 163, 74;         /* 成功状态 */
+  --color-warning: 234, 179, 8;         /* 警告状态 */
+  --color-error: 220, 38, 38;           /* 错误状态 */
+  --color-info: 59, 130, 246;           /* 信息状态 */
+  
+  /* 字体设置 */
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  
+  /* 边框圆角 */
+  --radius-sm: 0.25rem;     /* 4px */
+  --radius-md: 0.375rem;    /* 6px */
+  --radius-lg: 0.5rem;      /* 8px */
+  --radius-xl: 0.75rem;     /* 12px */
+  --radius-xxl: 1rem;       /* 16px */
+  --radius-full: 9999px;    /* 圆形 */
+  
+  /* 阴影效果 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.07), 0 10px 10px -5px rgba(0, 0, 0, 0.03);
+  
+  /* 过渡时间 */
+  --transition-fast: 150ms;
+  --transition-normal: 250ms;
+  --transition-slow: 350ms;
+  
+  /* Z轴层级 */
+  --z-negative: -1;
+  --z-base: 0;
+  --z-low: 10;
+  --z-menu: 100;
+  --z-modal: 1000;
+  --z-toast: 2000;
+}
+
+/* 将暗色主题变量定义为:root的CSS变量 */
+html.dark {
+  /* 中性色 - 暗色模式 */
+  --color-background: 15, 17, 21;       /* 深色背景 */
+  --color-foreground: 242, 242, 242;    /* 浅色文本 */
+  --color-card: 25, 27, 32;             /* 卡片背景 */
+  --color-muted: 160, 160, 160;         /* 次要文本 */
+  --color-border: 50, 55, 65;           /* 边框色 */
+  
+  /* 功能色 - 暗色模式调整 */
+  --color-success: 34, 197, 94;
+  --color-warning: 250, 204, 21;
+  --color-error: 248, 113, 113;
+  --color-info: 96, 165, 250;
+  
+  /* 阴影 - 暗色模式微调 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.25), 0 2px 4px -1px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.25), 0 10px 10px -5px rgba(0, 0, 0, 0.15);
+}
 
 @layer base {
-  :root {
-    /* 字体设置 */
-    --font-sans: var(--font-geist-sans);
-    --font-mono: var(--font-geist-mono);
-    
-    /* 圆角半径 */
-    --radius-sm: 0.5rem;
-    --radius-md: 0.75rem;
-    --radius-lg: 1rem;
-    --radius-xl: 1.25rem;
-    
-    /* 主色调 - 亮蓝色 #0090FF */
-    --color-primary: 0, 144, 255;
-    --color-primary-light: 77, 178, 255;
-    --color-primary-dark: 0, 110, 196;
-    
-    /* 中性色 - 亮色模式 */
-    --color-background: 255, 255, 255;
-    --color-foreground: 26, 26, 26;
-    --color-card: 255, 255, 255, 0.8;
-    --color-card-foreground: 26, 26, 26;
-    --color-border: 230, 230, 230;
-    
-    /* 状态色 - 亮色模式 */
-    --color-success: 22, 163, 74;
-    --color-warning: 234, 179, 8;
-    --color-error: 220, 38, 38;
-    --color-info: 59, 130, 246;
-
-    /* 阴影 */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-    
-    /* 过渡时间 */
-    --transition-fast: 150ms;
-    --transition-normal: 250ms;
-    --transition-slow: 350ms;
-  }
-  
-  .dark {
-    /* 中性色 - 暗色模式 */
-    --color-background: 15, 17, 21;
-    --color-foreground: 242, 242, 242;
-    --color-card: 25, 27, 32, 0.8;
-    --color-card-foreground: 242, 242, 242;
-    --color-border: 50, 55, 65;
-    
-    /* 状态色 - 暗色模式 */
-    --color-success: 34, 197, 94;
-    --color-warning: 250, 204, 21;
-    --color-error: 248, 113, 113;
-    --color-info: 96, 165, 250;
-    
-    /* 阴影 - 暗色模式微调 */
-    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-    --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
-  }
-  
   * {
-    @apply border-none;
+    border-color: rgb(var(--color-border));
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
   
   html {
-    @apply antialiased scroll-smooth;
+    scroll-behavior: smooth;
   }
   
   body {
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-foreground));
-    font-family: var(--font-sans), system-ui, sans-serif;
+    font-feature-settings: "rlig" 1, "calt" 1;
     transition: background-color var(--transition-normal), color var(--transition-normal);
     background-image: radial-gradient(
-      circle at 25% 25%, 
-      rgba(var(--color-primary), 0.05) 0%, 
-      transparent 50%
+      circle at 15% 15%, 
+      rgba(var(--color-primary), 0.03) 0%, 
+      transparent 60%
     );
     background-attachment: fixed;
   }
   
-  /* 辅助功能增强 - 焦点轮廓 */
-  :focus {
-    outline: 2px solid rgb(var(--color-primary));
-    outline-offset: 2px;
-  }
-  
-  /* 仅在使用键盘导航时显示焦点轮廓 */
-  :focus:not(:focus-visible) {
-    outline: none;
-  }
-  
-  :focus-visible {
-    outline: 2px solid rgb(var(--color-primary));
-    outline-offset: 2px;
-  }
-  
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
+    font-weight: 500;
     letter-spacing: -0.025em;
   }
   
   h1 {
-    font-size: 2.25rem;
-    font-weight: 700;
-  }
-  
-  h2 {
     font-size: 1.875rem;
     font-weight: 700;
   }
   
-  h3 {
+  @media (min-width: 768px) {
+    h1 {
+      font-size: 2.25rem;
+    }
+  }
+  
+  h2 {
     font-size: 1.5rem;
+    font-weight: 700;
+  }
+  
+  @media (min-width: 768px) {
+    h2 {
+      font-size: 1.875rem;
+    }
+  }
+  
+  h3 {
+    font-size: 1.25rem;
     font-weight: 600;
   }
   
-  a {
-    color: rgb(var(--color-primary));
-    transition: color var(--transition-fast);
-    position: relative;
+  @media (min-width: 768px) {
+    h3 {
+      font-size: 1.5rem;
+    }
   }
   
-  a:hover {
-    color: rgb(var(--color-primary-dark));
+  h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
   }
   
-  /* 链接微交互 */
-  a:after {
-    content: '';
-    position: absolute;
-    width: 100%;
-    height: 1px;
-    bottom: 0;
-    left: 0;
-    background-color: rgb(var(--color-primary));
-    transform: scaleX(0);
-    transform-origin: bottom right;
-    transition: transform var(--transition-normal);
+  p {
+    line-height: 1.625;
   }
   
-  a:hover:after {
-    transform: scaleX(1);
-    transform-origin: bottom left;
+  /* 可访问性增强 */
+  :focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--color-primary)), 0 0 0 4px rgb(var(--color-background));
   }
   
   /* 滚动条样式 */
   ::-webkit-scrollbar {
-    width: 0.5rem;
+    width: 6px;
   }
   
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background-color: transparent;
   }
   
   ::-webkit-scrollbar-thumb {
-    background-color: rgba(var(--color-primary), 0.5);
+    background-color: rgba(var(--color-primary), 0.3);
     border-radius: 9999px;
     transition: background-color 0.2s;
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(var(--color-primary), 0.7);
+    background-color: rgba(var(--color-primary), 0.5);
   }
 }
 
 @layer components {
+  /* 布局组件 */
+  .main-layout {
+    display: grid;
+    height: 100vh;
+    overflow: hidden;
+    grid-template-areas: 
+      "sidebar content artifacts";
+    grid-template-columns: minmax(220px, 1fr) minmax(0, 3fr) minmax(280px, 1fr);
+  }
+
+  .main-layout-mobile {
+    display: grid;
+    height: 100vh;
+    overflow: hidden;
+    grid-template-areas: 
+      "content";
+    grid-template-columns: 1fr;
+  }
+  
+  /* 三面板布局 */
+  .panel-sidebar {
+    height: 100%;
+    overflow-y: auto;
+    grid-area: sidebar;
+    border-right: 1px solid rgba(var(--color-border), 0.5);
+  }
+  
+  .panel-content {
+    height: 100%;
+    overflow-y: auto;
+    grid-area: content;
+  }
+  
+  .panel-artifacts {
+    height: 100%;
+    overflow-y: auto;
+    grid-area: artifacts;
+    border-left: 1px solid rgba(var(--color-border), 0.5);
+  }
+  
   /* 卡片组件 */
   .card {
-    background-color: rgba(var(--color-card));
+    background-color: rgb(var(--color-card));
     border-radius: var(--radius-lg);
-    border: 1px solid rgba(var(--color-border), 0.5);
-    box-shadow: var(--shadow-md);
-    padding: 1.5rem;
-    backdrop-filter: blur(8px);
+    border: 1px solid rgba(var(--color-border), 0.6);
+    box-shadow: var(--shadow-sm);
+    padding: 1rem;
+    backdrop-filter: blur(4px);
     transition: all 0.2s;
   }
   
-  /* 面板组件 */
-  .panel {
-    background-color: rgba(var(--color-card));
-    border-radius: var(--radius-md);
-    border: 1px solid rgba(var(--color-border), 0.5);
-    box-shadow: var(--shadow-sm);
-    backdrop-filter: blur(8px);
+  .card-hover:hover {
+    border-color: rgba(var(--color-primary), 0.3);
+    box-shadow: var(--shadow-md);
   }
   
-  /* 按钮组件 */
+  /* 消息组件 */
+  .message {
+    margin-bottom: 1rem;
+    border-radius: var(--radius-xl);
+    padding: 1rem;
+    color: rgb(var(--color-foreground));
+  }
+  
+  .user-message {
+    background-color: rgba(var(--color-primary), 0.1);
+    border: 1px solid rgba(var(--color-primary), 0.2);
+  }
+  
+  .assistant-message {
+    background-color: rgb(var(--color-card));
+    border: 1px solid rgba(var(--color-border), 0.6);
+    box-shadow: var(--shadow-sm);
+  }
+  
+  /* 按钮基础样式 */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-normal);
+  }
+  
+  .btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 2px rgb(var(--color-primary)), 0 0 0 4px rgb(var(--color-background));
+  }
+  
+  .btn:disabled {
+    pointer-events: none;
+    opacity: 0.5;
+  }
+  
+  .btn-sm {
+    height: 2rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    font-size: 0.75rem;
+  }
+  
+  .btn-md {
+    height: 2.5rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .btn-lg {
+    height: 3rem;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    font-size: 1rem;
+  }
+  
+  /* 按钮变体 */
   .btn-primary {
     background-color: rgb(var(--color-primary));
     color: white;
-    border-radius: var(--radius-md);
-    padding: 0.5rem 1rem;
-    transition: background-color 0.2s;
-    box-shadow: var(--shadow-sm);
   }
   
   .btn-primary:hover {
@@ -207,155 +298,148 @@
   }
   
   .btn-secondary {
-    background-color: transparent;
-    border: 1px solid rgb(var(--color-primary));
+    background-color: rgba(var(--color-primary), 0.1);
     color: rgb(var(--color-primary));
-    border-radius: var(--radius-md);
-    padding: 0.5rem 1rem;
-    transition: background-color 0.2s;
   }
   
   .btn-secondary:hover {
-    background-color: rgba(var(--color-primary), 0.1);
+    background-color: rgba(var(--color-primary), 0.2);
+  }
+  
+  .btn-outline {
+    background-color: transparent;
+    border: 1px solid rgb(var(--color-border));
+    color: rgb(var(--color-foreground));
+  }
+  
+  .btn-outline:hover {
+    background-color: rgba(var(--color-muted), 0.1);
   }
   
   .btn-ghost {
     background-color: transparent;
-    color: rgba(var(--color-foreground), 0.8);
-    border-radius: var(--radius-md);
-    padding: 0.5rem 1rem;
-    transition: background-color 0.2s;
+    color: rgb(var(--color-foreground));
   }
   
   .btn-ghost:hover {
-    background-color: rgba(var(--color-foreground), 0.1);
+    background-color: rgba(var(--color-muted), 0.1);
   }
   
-  /* 输入框组件 */
+  .btn-link {
+    background-color: transparent;
+    color: rgb(var(--color-primary));
+    padding: 0;
+    height: auto;
+    text-underline-offset: 4px;
+  }
+  
+  .btn-link:hover {
+    text-decoration: underline;
+  }
+  
+  /* 输入组件 */
   .input {
-    background-color: rgba(var(--color-card), 0.5);
-    border: 1px solid rgba(var(--color-border), 0.5);
+    display: flex;
+    height: 2.5rem;
+    width: 100%;
     border-radius: var(--radius-md);
-    padding: 0.5rem 1rem;
-    transition: all 0.15s;
+    border: 1px solid rgb(var(--color-border));
+    background-color: rgb(var(--color-card));
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
   }
   
-  .input:focus {
+  .input::placeholder {
+    color: rgb(var(--color-muted));
+  }
+  
+  .input:focus-visible {
     outline: none;
     box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.3);
   }
   
-  /* 消息组件 */
-  .message {
-    border-radius: var(--radius-lg);
-    padding: 1rem;
-    margin: 0.5rem 0;
-    max-width: 85%;
+  .input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
   
-  .user-message {
+  /* 标签 */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    border: 1px solid rgb(var(--color-border));
+    padding: 0 0.625rem;
+    height: 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+  
+  .badge-primary {
+    background-color: rgb(var(--color-primary));
+    color: white;
+    border-color: transparent;
+  }
+  
+  .badge-secondary {
     background-color: rgba(var(--color-primary), 0.1);
-    border: 1px solid rgba(var(--color-primary), 0.2);
-    margin-left: auto;
+    color: rgb(var(--color-primary));
   }
   
-  .assistant-message {
-    background-color: rgba(var(--color-card));
-    border: 1px solid rgba(var(--color-border), 0.5);
-    margin-right: auto;
-  }
-  
-  /* 主题切换按钮 */
-  .theme-toggle {
-    padding: 0.5rem;
-    border-radius: var(--radius-md);
-    transition: background-color 0.2s;
-  }
-  
-  .theme-toggle:hover {
-    background-color: rgba(var(--color-foreground), 0.1);
-  }
-  
-  .theme-toggle:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px rgba(var(--color-primary), 0.3);
+  .badge-outline {
+    color: rgb(var(--color-foreground));
   }
 }
 
 @layer utilities {
-  /* 文本渐变 */
-  .text-gradient {
-    background: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-primary-light)));
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
+  /* 自定义工具类 */
+  .animate-fade-in {
+    animation: fadeIn var(--transition-normal) ease-in-out forwards;
   }
   
-  /* 玻璃态效果 */
-  .glass {
+  .animate-slide-up {
+    animation: slideUp var(--transition-normal) ease-out forwards;
+  }
+  
+  .animate-pulse {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    background-image: linear-gradient(to right, rgb(var(--color-primary)), rgb(var(--color-primary-light)));
+  }
+  
+  .glassmorphism {
     background-color: rgba(var(--color-card), 0.8);
     backdrop-filter: blur(8px);
-    border: 1px solid rgba(var(--color-border), 0.5);
+    border: 1px solid rgba(var(--color-border), 0.6);
+    box-shadow: var(--shadow-sm);
   }
   
-  /* 精简滚动条 */
-  .scrollbar-thin::-webkit-scrollbar {
-    width: 0.25rem;
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
   
-  .scrollbar-thin::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb {
-    background-color: rgba(var(--color-primary), 0.3);
-    border-radius: 9999px;
-  }
-  
-  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(var(--color-primary), 0.5);
-  }
-  
-  /* 文本省略 */
-  .line-clamp-1 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  
-  .line-clamp-2 {
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 
-/* 动画 */
-@keyframes fade-in {
+@keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 
-@keyframes slide-up {
-  from { transform: translateY(20px); opacity: 0; }
+@keyframes slideUp {
+  from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.7; }
-}
-
-.animate-fade-in {
-  animation: fade-in 0.15s ease-in-out;
-}
-
-.animate-slide-up {
-  animation: slide-up 0.3s ease-out;
-}
-
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }

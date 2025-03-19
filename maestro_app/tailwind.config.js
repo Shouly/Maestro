@@ -10,40 +10,33 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0090FF', // 主要强调色
-          light: '#4DB2FF',
-          dark: '#006EC4',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          light: 'rgb(var(--color-primary-light) / <alpha-value>)',
+          dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
-        background: {
-          DEFAULT: 'rgb(var(--color-background) / <alpha-value>)',
-          light: '#FFFFFF',
-          dark: '#0F1115',
-        },
-        foreground: {
-          DEFAULT: 'rgb(var(--color-foreground) / <alpha-value>)',
-          light: '#1A1A1A',
-          dark: '#F2F2F2',
-        },
-        card: {
-          DEFAULT: 'rgb(var(--color-card) / <alpha-value>)',
-          light: 'rgba(255, 255, 255, 0.8)',
-          dark: 'rgba(25, 27, 32, 0.8)',
-        },
-        border: {
-          DEFAULT: 'rgb(var(--color-border) / <alpha-value>)',
-          light: 'rgba(230, 230, 230, 1)',
-          dark: 'rgba(50, 55, 65, 1)',
-        },
+        background: 'rgb(var(--color-background) / <alpha-value>)',
+        foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
+        card: 'rgb(var(--color-card) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
+        
+        // 功能色
+        success: 'rgb(var(--color-success) / <alpha-value>)',
+        warning: 'rgb(var(--color-warning) / <alpha-value>)',
+        error: 'rgb(var(--color-error) / <alpha-value>)',
+        info: 'rgb(var(--color-info) / <alpha-value>)',
       },
       fontFamily: {
-        sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'monospace'],
+        sans: ['var(--font-sans)'],
+        mono: ['var(--font-mono)'],
       },
       borderRadius: {
         'sm': 'var(--radius-sm)',
         'md': 'var(--radius-md)',
         'lg': 'var(--radius-lg)',
         'xl': 'var(--radius-xl)',
+        'xxl': 'var(--radius-xxl)',
+        'full': 'var(--radius-full)',
       },
       boxShadow: {
         'sm': 'var(--shadow-sm)',
@@ -52,17 +45,17 @@ module.exports = {
         'xl': 'var(--shadow-xl)',
       },
       animation: {
-        'fade-in': 'fade 0.15s ease-in-out',
-        'slide-up': 'slide-up 0.3s ease-out',
+        'fade-in': 'fadeIn var(--transition-normal) ease-in-out forwards',
+        'slide-up': 'slideUp var(--transition-normal) ease-out forwards',
         'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
       },
       keyframes: {
-        fade: {
+        fadeIn: {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
-        'slide-up': {
-          '0%': { transform: 'translateY(20px)', opacity: '0' },
+        slideUp: {
+          '0%': { transform: 'translateY(10px)', opacity: '0' },
           '100%': { transform: 'translateY(0)', opacity: '1' },
         },
         pulse: {
