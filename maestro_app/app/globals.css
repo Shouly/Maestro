@@ -1,50 +1,53 @@
 @import "tailwindcss";
 
 @theme {
-  /* 主题色调 系统 */
-  --color-primary: 56, 189, 248;        /* #38BDF8 - 明亮天蓝色作为主色 */
-  --color-primary-light: 125, 211, 252; /* #7DD3FC - 浅天蓝色用于hover */
-  --color-primary-dark: 2, 132, 199;    /* #0284C7 - 深天蓝色用于active */
+  /* 主题色调 - Canva风格的明亮活泼色彩 */
+  --color-primary: 0, 144, 255;         /* #0090FF - 明亮蓝色主色 */
+  --color-primary-light: 96, 165, 250;  /* #60A5FA - 柔和蓝色用于hover */
+  --color-primary-dark: 0, 102, 204;    /* #0066CC - 深蓝色用于active */
   
-  /* 中性色 - 亮色模式 */
-  --color-background: 248, 250, 252;    /* #F8FAFC - 浅灰蓝背景 */
-  --color-foreground: 15, 23, 42;       /* #0F172A - 深蓝灰文本 */
+  /* 中性色 - 更柔和的色调 */
+  --color-background: 252, 252, 252;    /* #FCFCFC - 纯净白背景 */
+  --color-foreground: 23, 23, 23;       /* #171717 - 深灰文本 */
   --color-card: 255, 255, 255;          /* #FFFFFF - 纯白卡片 */
-  --color-muted: 100, 116, 139;         /* #64748B - 柔和次要文本 */
-  --color-border: 226, 232, 240;        /* #E2E8F0 - 淡蓝灰边框 */
+  --color-muted: 107, 114, 128;         /* #6B7280 - 柔和灰色文本 */
+  --color-border: 229, 231, 235;        /* #E5E7EB - 淡灰边框 */
   
-  /* 功能色 - 更柔和的色调 */
-  --color-success: 34, 197, 94;         /* #22C55E - 清新绿色 */
-  --color-warning: 245, 158, 11;        /* #F59E0B - 温暖橙色 */
-  --color-error: 239, 68, 68;           /* #EF4444 - 柔和红色 */
-  --color-info: 59, 130, 246;           /* #3B82F6 - 信息蓝色 */
+  /* 功能色 - Canva风格的鲜艳色彩 */
+  --color-success: 52, 211, 153;        /* #34D399 - 薄荷绿 */
+  --color-warning: 251, 191, 36;        /* #FBBF24 - 温暖黄 */
+  --color-error: 248, 113, 113;         /* #F87171 - 珊瑚红 */
+  --color-info: 139, 92, 246;           /* #8B5CF6 - 柔和紫 */
   
-  /* 渐变色 - 用于特殊效果 */
-  --gradient-primary: linear-gradient(135deg, rgb(56, 189, 248) 0%, rgb(2, 132, 199) 100%);
-  --gradient-secondary: linear-gradient(135deg, rgb(226, 232, 240) 0%, rgb(148, 163, 184) 100%);
+  /* 渐变色 - Canva风格的渐变 */
+  --gradient-primary: linear-gradient(135deg, #0090FF 0%, #60A5FA 100%);
+  --gradient-secondary: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+  --gradient-success: linear-gradient(135deg, #34D399 0%, #6EE7B7 100%);
+  --gradient-error: linear-gradient(135deg, #F87171 0%, #FCA5A5 100%);
   
   /* 阴影效果 - 更柔和的投影 */
-  --shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.03);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 8px 16px rgba(15, 23, 42, 0.06);
-  --shadow-xl: 0 16px 24px rgba(15, 23, 42, 0.08);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.1);
   
-  /* 字体设置 */
+  /* 字体设置 - 现代清晰的字体 */
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-display: 'Clash Display', sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
   
-  /* 边框圆角 */
-  --radius-sm: 4px;     /* 4px */
-  --radius-md: 6px;     /* 6px */
-  --radius-lg: 8px;     /* 8px */
-  --radius-xl: 12px;    /* 12px */
-  --radius-xxl: 16px;   /* 16px */
-  --radius-full: 9999px;    /* 圆形 */
+  /* 边框圆角 - Canva风格的圆润感 */
+  --radius-sm: 6px;      /* 6px */
+  --radius-md: 8px;      /* 8px */
+  --radius-lg: 12px;     /* 12px */
+  --radius-xl: 16px;     /* 16px */
+  --radius-xxl: 24px;    /* 24px */
+  --radius-full: 9999px; /* 圆形 */
   
-  /* 过渡时间 */
-  --transition-fast: 200ms;
-  --transition-normal: 300ms;
-  --transition-slow: 500ms;
+  /* 过渡时间 - 平滑的动画效果 */
+  --transition-fast: 150ms;
+  --transition-normal: 200ms;
+  --transition-slow: 300ms;
   
   /* Z轴层级 */
   --z-negative: -1;
@@ -57,24 +60,24 @@
 
 /* 暗色主题变量 */
 html.dark {
-  /* 中性色 - 暗色模式（深蓝灰色调） */
-  --color-background: 15, 23, 42;       /* #0F172A - 深蓝灰背景 */
-  --color-foreground: 241, 245, 249;    /* #F1F5F9 - 浅灰蓝文本 */
-  --color-card: 30, 41, 59;             /* #1E293B - 深蓝灰卡片 */
-  --color-muted: 148, 163, 184;         /* #94A3B8 - 柔和次要文本 */
-  --color-border: 51, 65, 85;           /* #334155 - 深蓝灰边框 */
+  /* 中性色 - 暗色模式（深色但不失活力） */
+  --color-background: 17, 24, 39;       /* #111827 - 深灰背景 */
+  --color-foreground: 243, 244, 246;    /* #F3F4F6 - 浅灰文本 */
+  --color-card: 31, 41, 55;             /* #1F2937 - 深灰卡片 */
+  --color-muted: 156, 163, 175;         /* #9CA3AF - 柔和灰文本 */
+  --color-border: 75, 85, 99;           /* #4B5563 - 中灰边框 */
   
-  /* 功能色 - 暗色模式（更鲜艳） */
-  --color-success: 34, 197, 94;         /* #22C55E - 保持鲜艳 */
-  --color-warning: 245, 158, 11;        /* #F59E0B - 保持醒目 */
-  --color-error: 239, 68, 68;           /* #EF4444 - 保持警示 */
-  --color-info: 59, 130, 246;           /* #3B82F6 - 保持信息色 */
+  /* 功能色 - 暗色模式下保持鲜艳 */
+  --color-success: 52, 211, 153;        /* #34D399 - 保持鲜艳 */
+  --color-warning: 251, 191, 36;        /* #FBBF24 - 保持醒目 */
+  --color-error: 248, 113, 113;         /* #F87171 - 保持警示 */
+  --color-info: 139, 92, 246;           /* #8B5CF6 - 保持活力 */
   
   /* 暗色模式阴影 - 更深的投影 */
   --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.25);
-  --shadow-lg: 0 8px 16px rgba(0, 0, 0, 0.3);
-  --shadow-xl: 0 16px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.3);
+  --shadow-xl: 0 16px 32px rgba(0, 0, 0, 0.35);
 }
 
 @layer base {
@@ -247,227 +250,167 @@ html.dark {
     padding: 16px;
   }
   
-  /* 卡片组件 */
+  /* 卡片组件 - Canva风格 */
   .card {
     background-color: rgb(var(--color-card));
-    border-radius: var(--radius-lg);
-    border: 1px solid rgba(var(--color-border), 0.6);
-    box-shadow: var(--shadow-sm);
-    padding: 16px;
-    transition: all var(--transition-fast);
+    border-radius: var(--radius-xl);
+    border: 1px solid rgba(var(--color-border), 0.1);
+    box-shadow: var(--shadow-md);
+    padding: 24px;
+    transition: all var(--transition-normal);
   }
   
   .card-hover:hover {
-    border-color: rgba(var(--color-primary), 0.3);
-    box-shadow: var(--shadow-md);
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    border-color: rgba(var(--color-primary), 0.2);
   }
   
-  /* 消息组件 */
+  /* 消息组件 - 更现代的样式 */
   .message {
-    margin-bottom: 16px;
     border-radius: var(--radius-lg);
-    padding: 12px 16px;
-    max-width: 92%;
-    animation: fadeIn var(--transition-fast) ease-out forwards;
+    padding: 16px;
+    margin: 8px 0;
+    transition: all var(--transition-normal);
   }
   
   .user-message {
-    background-color: rgba(var(--color-primary), 0.1);
-    border: 1px solid rgba(var(--color-primary), 0.2);
-    margin-left: auto;
-    border-bottom-right-radius: 4px;
+    background: linear-gradient(135deg, rgba(var(--color-primary), 0.1) 0%, rgba(var(--color-primary), 0.05) 100%);
+    border: 1px solid rgba(var(--color-primary), 0.1);
   }
   
   .assistant-message {
-    background-color: rgb(var(--color-card));
-    border: 1px solid rgba(var(--color-border), 0.6);
+    background: rgb(var(--color-card));
+    border: 1px solid rgba(var(--color-border), 0.1);
     box-shadow: var(--shadow-sm);
-    margin-right: auto;
-    border-bottom-left-radius: 4px;
   }
   
-  /* 按钮基础样式 */
+  /* 按钮组件 - Canva风格 */
   .btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     font-weight: 500;
-    transition: all var(--transition-fast);
+    transition: all var(--transition-normal);
+    padding: 8px 16px;
     cursor: pointer;
-    user-select: none;
-    text-decoration: none;
-    line-height: 1;
-    outline: none;
-    white-space: nowrap;
-    transform: translateZ(0) scale(1);
+    box-shadow: var(--shadow-sm);
   }
   
   .btn:hover {
-    transform: translateZ(0) scale(1.02);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
-
+  
   .btn:active {
-    transform: translateZ(0) scale(0.98);
-  }
-  
-  .btn:focus-visible {
-    box-shadow: 0 0 0 2px rgb(var(--color-background)), 0 0 0 4px rgb(var(--color-primary));
-  }
-  
-  .btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    pointer-events: none;
-  }
-  
-  .btn-sm {
-    height: 32px;
-    padding: 0 12px;
-    font-size: 13px;
-    min-width: 64px;
-    gap: 4px;
-  }
-  
-  .btn-md {
-    height: 40px;
-    padding: 0 16px;
-    font-size: 14px;
-    min-width: 96px;
-    gap: 6px;
-  }
-  
-  .btn-lg {
-    height: 48px;
-    padding: 0 24px;
-    font-size: 16px;
-    min-width: 120px;
-    gap: 8px;
+    transform: translateY(0);
   }
   
   .btn-primary {
-    background-color: rgb(var(--color-primary));
+    background: var(--gradient-primary);
     color: white;
     border: none;
   }
   
   .btn-primary:hover {
-    background-color: rgb(var(--color-primary-dark));
+    opacity: 0.9;
   }
   
   .btn-secondary {
-    background-color: rgba(var(--color-foreground), 0.1);
-    color: rgb(var(--color-foreground));
+    background: var(--gradient-secondary);
+    color: white;
     border: none;
   }
   
   .btn-secondary:hover {
-    background-color: rgba(var(--color-foreground), 0.15);
+    opacity: 0.9;
   }
   
-  .btn-outline {
-    background-color: transparent;
-    border: 1px solid rgb(var(--color-border));
-    color: rgb(var(--color-foreground));
-  }
-  
-  .btn-outline:hover {
-    border-color: rgb(var(--color-primary));
-    color: rgb(var(--color-primary));
-  }
-  
-  .btn-ghost {
-    background-color: transparent;
-    border: none;
-    color: rgb(var(--color-foreground));
-  }
-  
-  .btn-ghost:hover {
-    background-color: rgba(var(--color-foreground), 0.05);
-  }
-  
-  .btn-link {
-    background-color: transparent;
-    border: none;
-    color: rgb(var(--color-primary));
-    padding: 0;
-    height: auto;
-    min-width: auto;
-    text-decoration: underline;
-    text-underline-offset: 2px;
-  }
-  
-  .btn-link:hover {
-    color: rgb(var(--color-primary-dark));
-  }
-  
-  /* 输入框 */
+  /* 输入框组件 - 更现代的样式 */
   .input {
-    display: block;
     width: 100%;
-    height: 40px;
-    padding: 0 12px;
-    font-size: 14px;
+    padding: 12px 16px;
+    border-radius: var(--radius-lg);
+    border: 2px solid rgba(var(--color-border), 0.2);
     background-color: rgb(var(--color-card));
-    border: 1px solid rgb(var(--color-border));
-    border-radius: var(--radius-md);
-    transition: all var(--transition-fast);
-    outline: none;
     color: rgb(var(--color-foreground));
+    transition: all var(--transition-normal);
+    font-size: 14px;
+    line-height: 1.5;
   }
   
-  .input::placeholder {
-    color: rgba(var(--color-foreground), 0.4);
-  }
-  
-  .input:focus-visible {
+  .input:focus {
     border-color: rgb(var(--color-primary));
-    box-shadow: 0 0 0 1px rgb(var(--color-primary));
+    box-shadow: 0 0 0 3px rgba(var(--color-primary), 0.1);
   }
   
-  .input:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-  
-  .input-error {
-    border-color: rgb(var(--color-error));
-  }
-
-  .input-error:focus-visible {
-    border-color: rgb(var(--color-error));
-    box-shadow: 0 0 0 1px rgb(var(--color-error));
-  }
-
-  /* 徽章 */
+  /* 徽章组件 - Canva风格 */
   .badge {
     display: inline-flex;
     align-items: center;
-    justify-content: center;
-    height: 20px;
-    padding: 0 8px;
+    padding: 4px 12px;
+    border-radius: var(--radius-full);
     font-size: 12px;
     font-weight: 500;
-    border-radius: var(--radius-full);
-    line-height: 1;
-    white-space: nowrap;
+    line-height: 1.5;
+    transition: all var(--transition-normal);
   }
   
   .badge-primary {
-    background-color: rgb(var(--color-primary));
+    background: var(--gradient-primary);
     color: white;
   }
   
   .badge-secondary {
-    background-color: rgba(var(--color-foreground), 0.1);
-    color: rgb(var(--color-foreground));
+    background: var(--gradient-secondary);
+    color: white;
   }
   
-  .badge-outline {
-    background-color: transparent;
-    border: 1px solid rgb(var(--color-border));
-    color: rgb(var(--color-foreground));
+  /* 代码块组件 - 更现代的样式 */
+  .code-block {
+    background-color: rgb(var(--color-card));
+    border-radius: var(--radius-lg);
+    border: 1px solid rgba(var(--color-border), 0.1);
+    box-shadow: var(--shadow-sm);
+    margin: 16px 0;
+    overflow: hidden;
+  }
+  
+  .code-block-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(var(--color-foreground), 0.02);
+    border-bottom: 1px solid rgba(var(--color-border), 0.1);
+  }
+  
+  /* 工具提示组件 - Canva风格 */
+  .tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  
+  .tooltip-content {
+    position: absolute;
+    z-index: var(--z-tooltip);
+    padding: 8px 12px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    line-height: 1.4;
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: var(--shadow-lg);
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all var(--transition-normal);
+    pointer-events: none;
+  }
+  
+  .tooltip:hover .tooltip-content {
+    opacity: 1;
+    transform: translateY(0);
   }
   
   /* 动画类 */
@@ -510,77 +453,6 @@ html.dark {
   
   .scrollbar-hide::-webkit-scrollbar {
     display: none;  /* Chrome, Safari, Opera */
-  }
-
-  /* 代码块 */
-  .code-block {
-    position: relative;
-    background-color: rgb(30, 30, 30);
-    color: rgb(220, 220, 220);
-    border-radius: var(--radius-md);
-    padding: 16px;
-    font-family: var(--font-mono);
-    font-size: 13px;
-    line-height: 1.5;
-    overflow-x: auto;
-    margin: 16px 0;
-  }
-
-  .code-block-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 16px;
-    background-color: rgb(40, 40, 40);
-    border-top-left-radius: var(--radius-md);
-    border-top-right-radius: var(--radius-md);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    font-family: var(--font-sans);
-    font-size: 12px;
-    font-weight: 500;
-  }
-
-  .code-block-copy {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    padding: 4px;
-    background-color: rgba(255, 255, 255, 0.1);
-    border-radius: var(--radius-sm);
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-  }
-
-  .code-block:hover .code-block-copy {
-    opacity: 1;
-  }
-
-  /* 工具提示 */
-  .tooltip {
-    position: relative;
-    display: inline-block;
-  }
-
-  .tooltip-content {
-    visibility: hidden;
-    position: absolute;
-    z-index: var(--z-menu);
-    background-color: rgb(var(--color-foreground));
-    color: rgb(var(--color-background));
-    font-size: 12px;
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    white-space: nowrap;
-    opacity: 0;
-    transition: opacity var(--transition-fast);
-    bottom: 125%;
-    left: 50%;
-    transform: translateX(-50%);
-  }
-
-  .tooltip:hover .tooltip-content {
-    visibility: visible;
-    opacity: 0.9;
   }
 }
 
