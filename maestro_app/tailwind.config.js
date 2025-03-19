@@ -9,11 +9,13 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // 主色调
         primary: {
           DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
           light: 'rgb(var(--color-primary-light) / <alpha-value>)',
           dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
+        // 基础色调
         background: 'rgb(var(--color-background) / <alpha-value>)',
         foreground: 'rgb(var(--color-foreground) / <alpha-value>)',
         card: 'rgb(var(--color-card) / <alpha-value>)',
@@ -26,16 +28,42 @@ module.exports = {
         error: 'rgb(var(--color-error) / <alpha-value>)',
         info: 'rgb(var(--color-info) / <alpha-value>)',
       },
+      spacing: {
+        '4': '4px',
+        '8': '8px',
+        '12': '12px',
+        '16': '16px',
+        '24': '24px',
+        '32': '32px',
+        '40': '40px',
+        '48': '48px',
+      },
       fontFamily: {
         sans: ['var(--font-sans)'],
         mono: ['var(--font-mono)'],
+      },
+      fontSize: {
+        'xs': ['12px', { lineHeight: '16px', letterSpacing: '-0.01em' }],
+        'sm': ['13px', { lineHeight: '18px', letterSpacing: '-0.01em' }],
+        'base': ['14px', { lineHeight: '22px', letterSpacing: '-0.01em' }],
+        'lg': ['16px', { lineHeight: '24px', letterSpacing: '-0.01em' }],
+        'xl': ['18px', { lineHeight: '28px', letterSpacing: '-0.01em' }],
+        '2xl': ['20px', { lineHeight: '30px', letterSpacing: '-0.02em' }],
+        '3xl': ['22px', { lineHeight: '32px', letterSpacing: '-0.02em' }],
+        '4xl': ['24px', { lineHeight: '36px', letterSpacing: '-0.02em' }],
+      },
+      fontWeight: {
+        normal: '400',
+        medium: '500',
+        semibold: '600',
+        bold: '700',
       },
       borderRadius: {
         'sm': 'var(--radius-sm)',
         'md': 'var(--radius-md)',
         'lg': 'var(--radius-lg)',
         'xl': 'var(--radius-xl)',
-        'xxl': 'var(--radius-xxl)',
+        '2xl': 'var(--radius-xxl)',
         'full': 'var(--radius-full)',
       },
       boxShadow: {
@@ -48,6 +76,9 @@ module.exports = {
         'fade-in': 'fadeIn var(--transition-normal) ease-in-out forwards',
         'slide-up': 'slideUp var(--transition-normal) ease-out forwards',
         'pulse': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        'typing': 'typing 2s steps(40, end)',
+        'scale-in': 'scaleIn var(--transition-fast) ease-out forwards',
+        'scale-out': 'scaleOut var(--transition-fast) ease-in forwards',
       },
       keyframes: {
         fadeIn: {
@@ -61,6 +92,18 @@ module.exports = {
         pulse: {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.7' },
+        },
+        typing: {
+          'from': { width: '0' },
+          'to': { width: '100%' },
+        },
+        scaleIn: {
+          '0%': { transform: 'scale(0.98)', opacity: '0.8' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        scaleOut: {
+          '0%': { transform: 'scale(1)', opacity: '1' },
+          '100%': { transform: 'scale(0.98)', opacity: '0.8' },
         },
       },
       textColor: {
@@ -121,7 +164,33 @@ module.exports = {
       },
       ringColor: {
         'primary': 'rgb(var(--color-primary))',
-      }
+      },
+      // 新增屏幕断点
+      screens: {
+        'xs': '480px',
+        'sm': '640px',
+        'md': '768px',
+        'lg': '1024px',
+        'xl': '1280px',
+        '2xl': '1536px',
+      },
+      // 新增栅格配置
+      gridTemplateColumns: {
+        'main': 'minmax(280px, 1fr) minmax(450px, 3fr) minmax(250px, 1fr)',
+        'main-md': 'minmax(280px, 1fr) minmax(450px, 3fr)',
+        'main-sm': '1fr',
+      },
+      transitionProperty: {
+        'height': 'height',
+        'spacing': 'margin, padding',
+        'width': 'width',
+        'size': 'height, width',
+      },
+      transitionDuration: {
+        '200': '200ms',
+        '300': '300ms',
+        '500': '500ms',
+      },
     },
   },
   plugins: [],

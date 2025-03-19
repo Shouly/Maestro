@@ -1,9 +1,7 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { SendHorizontal, Loader2 } from 'lucide-react';
-import { Button } from '../ui/button';
-import TextareaAutosize from 'react-textarea-autosize';
+import { useState } from 'react';
+import { AIInputWithSearch } from '../ui/ai-input-with-search';
 import { cn } from '@/lib/utils';
 
 interface Message {
@@ -13,110 +11,61 @@ interface Message {
 
 interface ChatInputProps {
   onSendMessage?: (message: Message) => void;
+  className?: string;
 }
 
-export default function ChatInput({ onSendMessage }: ChatInputProps) {
-  const [input, setInput] = useState('');
+export default function ChatInput({ onSendMessage, className }: ChatInputProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFocused, setIsFocused] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // 自动聚焦输入框
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.focus();
-    }
-  }, []);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!input.trim() || isSubmitting) return;
+  const handleSubmit = async (value: string, withSearch: boolean) => {
+    if (!value.trim() || isSubmitting) return;
     
     setIsSubmitting(true);
     
     try {
       // 如果提供了onSendMessage回调，调用它
       if (onSendMessage) {
+        // 发送用户消息
         onSendMessage({
           role: 'user',
-          content: input.trim()
+          content: withSearch ? `[搜索] ${value.trim()}` : value.trim()
         });
         
-        // 这里可以添加调用API的逻辑
-        // 模拟响应
+        // 模拟AI响应
         setTimeout(() => {
           onSendMessage({
             role: 'assistant',
-            content: `这是对 "${input.trim()}" 的模拟响应。在实际应用中，这将由AI生成。`
+            content: `这是对 "${value.trim()}" 的${withSearch ? '网络搜索' : ''}模拟响应。在实际应用中，这将由AI生成。`
           });
           setIsSubmitting(false);
         }, 800);
       }
-      
-      // 清空输入
-      setInput('');
     } catch (error) {
       console.error('发送消息时出错:', error);
       setIsSubmitting(false);
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit(e as unknown as React.FormEvent);
-    }
+  const handleFileSelect = (file: File) => {
+    console.log('选择的文件:', file);
+    // 处理文件上传逻辑
+    // 可以在这里添加文件处理、预览或上传的代码
   };
 
   return (
-    <form onSubmit={handleSubmit} className="relative">
-      <div 
+    <div className={cn("relative", className)}>
+      <AIInputWithSearch
+        placeholder="输入您的消息..."
+        onSubmit={handleSubmit}
+        onFileSelect={handleFileSelect}
         className={cn(
-          "glass flex items-end rounded-xl p-3 transition-all duration-[var(--transition-normal)]",
-          isFocused && "shadow-md border-[rgba(var(--color-primary),0.5)]",
-          isSubmitting && "opacity-80"
+          isSubmitting && "opacity-80 pointer-events-none",
         )}
-      >
-        <TextareaAutosize
-          ref={textareaRef}
-          placeholder="输入您的消息..."
-          className={cn(
-            "flex-1 bg-transparent border-none resize-none max-h-32 focus:outline-none",
-            "transition-all duration-[var(--transition-normal)]"
-          )}
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          disabled={isSubmitting}
-          minRows={1}
-          maxRows={5}
-          aria-label="聊天输入框"
-        />
-        <Button 
-          type="submit" 
-          variant="default"
-          size="icon"
-          className={cn(
-            "ml-2 rounded-xl p-2",
-            (!input.trim() || isSubmitting) && "opacity-50"
-          )}
-          disabled={isSubmitting || !input.trim()}
-          aria-label="发送消息"
-        >
-          {isSubmitting ? (
-            <Loader2 className="h-5 w-5 animate-spin" />
-          ) : (
-            <SendHorizontal className="h-5 w-5" />
-          )}
-        </Button>
-      </div>
+      />
       <div className="text-xs text-right mt-1 opacity-60 transition-opacity duration-[var(--transition-fast)] hover:opacity-100">
         按 <kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Enter</kbd> 发送，
         <kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Shift</kbd>+<kbd className="px-1 rounded border border-[rgba(var(--color-border),1)] bg-[rgba(var(--color-card),0.5)]">Enter</kbd> 换行
       </div>
-    </form>
+    </div>
   );
 } 
