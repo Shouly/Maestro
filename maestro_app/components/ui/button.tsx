@@ -4,29 +4,29 @@ import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "@/lib/utils"
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none overflow-hidden relative",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none hover:scale-[1.02] active:scale-[0.98]",
   {
     variants: {
       variant: {
         default:
-          "bg-[#0090FF] text-white hover:bg-[#0080E0] active:scale-[0.98] shadow-sm",
+          "bg-primary text-white hover:bg-primary/90",
         destructive:
-          "bg-error text-white hover:bg-error/90 active:scale-[0.98] shadow-sm",
+          "bg-error text-white hover:bg-error/90",
         outline:
-          "border border-border bg-background hover:bg-muted hover:text-[#0090FF] active:scale-[0.98] shadow-sm",
+          "border-2 border-border bg-background hover:border-primary/20 hover:bg-primary/5 hover:text-primary",
         secondary:
-          "bg-[rgba(0,144,255,0.1)] text-[#0090FF] hover:bg-[rgba(0,144,255,0.2)] active:scale-[0.98] shadow-sm",
+          "bg-primary/10 text-primary hover:bg-primary/20",
         ghost:
-          "text-foreground hover:bg-muted active:scale-[0.98]",
+          "text-foreground hover:bg-muted",
         link: 
-          "text-[#0090FF] underline-offset-4 hover:underline",
+          "text-primary underline-offset-4 hover:underline hover:scale-100 active:scale-100",
         gradient:
-          "text-white bg-gradient-to-r from-[#0090FF] to-[#0070DD] hover:brightness-105 active:scale-[0.98] shadow-sm",
+          "bg-gradient-to-r from-primary to-info text-white hover:brightness-105",
       },
       size: {
         default: "h-10 px-4 py-2",
-        sm: "h-8 rounded-md px-3 text-xs",
-        lg: "h-12 rounded-md px-6 text-base",
+        sm: "h-8 rounded-lg px-3 text-xs",
+        lg: "h-12 rounded-xl px-6 text-base",
         icon: "h-10 w-10",
       },
       block: {
@@ -53,62 +53,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, loading, block, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : "button"
     
-    // 创建涟漪效果函数
-    const handleRipple = (e: React.MouseEvent<HTMLButtonElement>) => {
-      const button = e.currentTarget;
-      const rect = button.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      
-      const ripple = document.createElement('span');
-      ripple.style.cssText = `
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        background-color: rgba(255, 255, 255, 0.5);
-        transform: translate(-50%, -50%) scale(0);
-        animation: ripple-effect 0.6s ease-out forwards;
-        pointer-events: none;
-        left: ${x}px;
-        top: ${y}px;
-      `;
-      
-      // 创建并添加动画
-      const style = document.createElement('style');
-      style.textContent = `
-        @keyframes ripple-effect {
-          0% {
-            transform: translate(-50%, -50%) scale(0);
-            opacity: 0.7;
-          }
-          100% {
-            transform: translate(-50%, -50%) scale(15);
-            opacity: 0;
-          }
-        }
-      `;
-      
-      document.head.appendChild(style);
-      button.appendChild(ripple);
-      
-      setTimeout(() => {
-        ripple.remove();
-        style.remove();
-      }, 600);
-    };
-    
     return (
       <Comp
         className={cn(buttonVariants({ variant, size, block, className }))}
         ref={ref}
         {...props}
-        onClick={(e) => {
-          if (!loading) {
-            handleRipple(e);
-            props.onClick?.(e);
-          }
-        }}
       >
         {loading ? (
           <>
